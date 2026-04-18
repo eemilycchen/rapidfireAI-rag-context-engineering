@@ -1,1 +1,7 @@
 rapidfireai
+langchain
+langchain_community
+langchain-openai
+langchain_huggingface
+unstructured
+pypandoc
