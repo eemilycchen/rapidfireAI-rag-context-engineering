@@ -98,6 +98,9 @@ RAPIDFIREAI-RAG-CONTEXT-ENGINEERING
 |   |   ├── validation-set-golden-qa-pairs.json
 |   |   └── validation-set-question-type-distribution.json
 |   └── sourcedocs/
+├── misc/
+|   ├── ai_usage.md
+|   └── scratch.ipynb
 └── discussion/
     ├── datasets/scifact/
     |   ├── corpus.jsonl
