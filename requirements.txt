@@ -9,3 +9,4 @@ langchain-postgres
 langchain-pinecone
 unstructured
 pypandoc
+spacy

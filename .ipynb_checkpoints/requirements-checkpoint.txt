@@ -1,0 +1,12 @@
+rapidfireai
+faiss-cpu
+pinecone
+langchain
+langchain_community
+langchain-openai
+langchain_huggingface
+langchain-postgres 
+langchain-pinecone
+unstructured
+pypandoc
+spacy
