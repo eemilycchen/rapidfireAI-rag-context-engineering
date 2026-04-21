@@ -82,4 +82,17 @@
    - Use no explicit retriever when a normal vector-store retriever is enough; just tune `vector_store_cfg` and `search_cfg`
    - Pass a custom `retriever` when you specifically want behavior like **multi-query** **expansion**, **compression**, **metadata-aware self-querying**, **hybrid/ensemble retrieval**, or **parent-doc retrieval**.
   
-3. 
+3. Model: ChatGPT
+   
+   ---
+   Prompt:  
+   > i have `openai` and `langchain` installed but `RFOpenAIAPIModelConfig` from `rapidfireai` keeps being None
+   ---
+
+   Notes from response:  
+
+   `RFOpenAIAPIModelConfig` is probably `None` because RapidFire’s import logic is swallowing an internal import failure and replacing the symbol with `None`. In `rapidfireai.automl.__init__`, the package does a guarded import of `RFOpenAIAPIModelConfig`; if that import raises `ImportError`, `AttributeError`, or `TypeError`, it silently sets `RFOpenAIAPIModelConfig = None`.
+
+   More specifically, the current source defines `RFOpenAIAPIModelConfig` only inside a block that requires both the evals modules and `vllm` to be importable. The file first tries `from vllm import SamplingParams`; if that fails, `_VLLM_AVAILABLE = False`. Then `RFOpenAIAPIModelConfig` is created only when `_VLLM_AVAILABLE and _EVALS_MODULES_AVAILABLE and SamplingParams is not None and InferenceEngine is not None`. So even though this is the OpenAI config, a missing `vllm` can still make it come out as `None`.
+
+4. 

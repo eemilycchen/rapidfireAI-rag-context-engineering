@@ -7,6 +7,3 @@ langchain-openai
 langchain_huggingface
 langchain-postgres 
 langchain-pinecone
-unstructured
-pypandoc
-spacy

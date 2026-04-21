@@ -2,3 +2,4 @@ tutorial_notebooks
 .DS_Store
 .vscode
 *.pyc
+api-key.txt
