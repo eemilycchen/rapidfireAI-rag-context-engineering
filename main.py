@@ -95,7 +95,14 @@ def main():
             'model_name': 'sentence-transformers/all-MiniLM-L6-v2',
             'model_kwargs': {'device': 'cpu'},
             'encode_kwargs': {'normalize_embeddings': True, 'batch_size': batch_size}
-        }
+        },
+        # {
+        #     'class': OpenAIEmbeddings,
+        #     'model': 'api-tgpt-embeddings',
+        #     'api_key': TRITON_API_KEY,
+        #     'base_url': BASE_URL,
+        #     'check_embedding_ctx_length': False
+        # }
     ])
 
     # define vector storage configurations
