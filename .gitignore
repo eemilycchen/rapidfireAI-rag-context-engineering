@@ -3,3 +3,4 @@ tutorial_notebooks
 .vscode
 *.pyc
 api-key.txt
+core
