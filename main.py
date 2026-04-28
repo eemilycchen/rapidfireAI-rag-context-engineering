@@ -165,7 +165,6 @@ def main():
         ]),
         'batch_size': batch_size,
         'preprocess_fn': sample_preprocess_fn, 'postprocess_fn': sample_postprocess_fn,
-        # add metrics later
         'compute_metrics_fn': {}, 'accumulate_metrics_fn': {},
     }])
     config_group = RFGridSearch(config_set)
@@ -230,9 +229,12 @@ def write_answer(path, results):
         answer = {}
         answer['question_id'] = question_id[i]
         answer['answer'] = answers[i]
-        answer['sources'] = json.loads(sources[i])
+        try:
+            answer['sources'] = json.loads(sources[i])
+        except json.JSONDecodeError:
+            answer['sources'] = []
         context = []
-        for s in json.loads(sources[i]):
+        for s in answer['sources']:
             if s in retrieved_documents[i]:
                 idx = retrieved_documents[i].index(s)
                 context.append(retrieved_contexts[i][idx])
