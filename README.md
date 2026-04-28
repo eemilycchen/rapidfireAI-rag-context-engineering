@@ -3,7 +3,7 @@
 ## Main Components
 (Copied from [Project Statement](project1-statement.pdf))
 - [ ] **Golden Data Creation:** Create at least 20 golden-labeled Q&A pairs over the documentation corpus, with identified source locations
-- [ ] **System Building:** Build a RAG pipeline that, given a user question, retrieves relevant document chunks and generates an answer within the context budget
+- [X] **System Building:** Build a RAG pipeline that, given a user question, retrieves relevant document chunks and generates an answer within the context budget
 - [ ] **Experimentation and Evaluation:** Use RapidFire AI OSS to systematically compare multiple RAG configurations (varying chunking, embedding, retrieval, reranking, and prompting strategies) and analyze results
 
 ## Things to Do
@@ -78,6 +78,25 @@
   - **Results and Analysis**
   - **AI Tools Statement**
 
+## To Run the Code
+- RAG:
+  ```
+  python3 main.py --input ./data/validation-set/validation-set-golden-qa-pairs.json --output ./output.json 
+  ```
+  (Using questions in `validation-set-golden-qa-pairs.json` and output to `./output.json`)
+- Evaluation:
+  - Evaluate Retrieval
+    
+    ```
+    python3 ./metrics/evaluate_retrieval.py --output ./output.json --validation data/validation-set/validation-set-golden-qa-pairs.json
+    ```
+
+  - LLM Judge
+    
+    ```
+    python3 metrics/run_judge.py --output ./output.json --validation ./data/validation-set/validation-set-golden-qa-pairs.json --base-url https://tritonai-api.ucsd.edu/v1 --model api-mistral-small-3.2-2506
+    ```
+
 ## Miscellaneous
 
 > Notes from Discussion:
@@ -98,6 +117,12 @@ RAPIDFIREAI-RAG-CONTEXT-ENGINEERING
 │   │   ├── validation-set-golden-qa-pairs.json
 │   │   └── validation-set-question-type-distribution.json
 │   └── sourcedocs/
+├── metrics/
+│   ├── evaluate_retrieval.py
+│   ├── judge_prompt.txt
+│   ├── project1_eval.py
+│   ├── rapidfire_integration_example.py
+│   └── run_judge.py
 ├── misc/
 │   ├── ai_usage.md
 │   └── scratch.ipynb
