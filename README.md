@@ -126,6 +126,12 @@ RAPIDFIREAI-RAG-CONTEXT-ENGINEERING
 ├── misc/
 │   ├── ai_usage.md
 │   └── scratch.ipynb
+├── experiments/
+│   ├── experiment.ipynb
+│   ├── judge_prompt.txt
+│   ├── project1_eval.py
+│   ├── rapidfire_integration_example.py
+│   └── results.ipynb
 └── discussion/
     ├── datasets/scifact/
     │   ├── corpus.jsonl
