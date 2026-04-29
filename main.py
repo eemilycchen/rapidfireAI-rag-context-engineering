@@ -3,10 +3,9 @@ from pathlib import Path
 import json
 from datasets import Dataset
 
-from typing import Dict, Any
+from typing import Dict
 from typing import List as listtype
 import re
-from collections import defaultdict
 
 # import custom modules
 from modules import TextLoaderWithMetadata, TextSplitterWithLineNum
@@ -21,11 +20,6 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 # embeddings
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_openai import OpenAIEmbeddings
-
-# retriever
-from langchain_core.retrievers import BaseRetriever
-from langchain_classic.retrievers import EnsembleRetriever
-from langchain_community.retrievers import TFIDFRetriever, AmazonKnowledgeBasesRetriever
 
 # cross encoder for reranking
 from langchain_classic.retrievers.document_compressors import CrossEncoderReranker
@@ -60,7 +54,7 @@ Rules:
 3. The answer should be in plain text and do not use any markdown syntax including list.
 4. Mention relevant file names and the corresponding start and end line number when they are clearly useful.
 5. There can be multiple sources but only keep the ones that are really relevant.
-6. If there are sources from the same file, only keep the most relevant one.
+6. The source must be in valid JSON format.
 
 Output format:
 #### ANSWER: <final answer>
@@ -89,21 +83,13 @@ def main():
     )
 
     # define embedding configurations
-    embedding_cfg = List([
-        {
-            'class': HuggingFaceEmbeddings,
-            'model_name': 'sentence-transformers/all-MiniLM-L6-v2',
-            'model_kwargs': {'device': 'cpu'},
-            'encode_kwargs': {'normalize_embeddings': True, 'batch_size': batch_size}
-        },
-        # {
-        #     'class': OpenAIEmbeddings,
-        #     'model': 'api-tgpt-embeddings',
-        #     'api_key': TRITON_API_KEY,
-        #     'base_url': BASE_URL,
-        #     'check_embedding_ctx_length': False
-        # }
-    ])
+    embedding_cfg = {
+        'class': OpenAIEmbeddings,
+        'model': 'api-tgpt-embeddings',
+        'api_key': TRITON_API_KEY,
+        'base_url': BASE_URL,
+        'check_embedding_ctx_length': False
+    }
 
     # define vector storage configurations
     vector_store_cfg={'type': 'faiss', 'batch_size': batch_size}
