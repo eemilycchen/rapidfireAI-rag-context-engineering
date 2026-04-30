@@ -104,7 +104,7 @@ def call_judge(
     reference_answer: str,
     retrieved_context: str,
     system_answer: str,
-    model: str = "gpt-4o-mini",
+    model: str = "claude-sonnet-4-6",
     base_url: str | None = None,
     api_key: str | None = None,
     max_attempts: int = 3,
@@ -139,9 +139,17 @@ def call_judge(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.0,
-                max_tokens=600,
             )
-            text = resp.choices[0].message.content.strip()
+            text = resp.choices[0].message.content
+            # Some OpenAI-compatible providers return None content if the
+            # response was cut off; treat as a failure to retry with a clear
+            # error rather than crashing on .strip().
+            if text is None:
+                raise ValueError(
+                    f"Judge response is None (finish_reason="
+                    f"{resp.choices[0].finish_reason!r})"
+                )
+            text = text.strip()
             text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text, flags=re.MULTILINE).strip()
             parsed = json.loads(text)
 
