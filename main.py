@@ -54,7 +54,7 @@ Rules:
 3. The answer should be in plain text and do not use any markdown syntax including list.
 4. Mention relevant file names and the corresponding start and end line number when they are clearly useful.
 5. There can be multiple sources but only keep the ones that are really relevant.
-6. The source must be in valid JSON format.
+6. The sources must be in valid JSON format.
 
 Output format:
 #### ANSWER: <final answer>
@@ -79,7 +79,7 @@ def main():
 
     # define text splitter
     text_splitter = TextSplitterWithLineNum().from_tiktoken_encoder(
-        encoding_name='o200k_base', chunk_size=512, chunk_overlap=64, separators=['\n', '\n\n']
+        encoding_name='o200k_base', chunk_size=384, chunk_overlap=64, separators=['\n', '\n\n']
     )
 
     # define embedding configurations
@@ -95,12 +95,12 @@ def main():
     vector_store_cfg={'type': 'faiss', 'batch_size': batch_size}
 
     # define searching algorithm configurations
-    search_cfg=List([{'type': 'similarity', 'k': 15}])
+    search_cfg=List([{'type': 'mmr', 'k': 15}])
 
     # define reranker configurations
     reranker_cfg={
-        'class': CrossEncoderReranker, 'model_name': 'cross-encoder/ms-marco-MiniLM-L6-v2',
-        'model_kwargs': {'device': 'cpu'}, 'top_n': 5,
+        'class': CrossEncoderReranker, 'model_name': 'BAAI/bge-reranker-v2-m3',
+        'model_kwargs': {'device': 'cpu'}, 'top_n': 8,
     }
 
     # define rag module
@@ -127,13 +127,10 @@ def main():
     openai_config = RFOpenAIAPIModelConfig(
         client_config={'api_key': TRITON_API_KEY, 'base_url': BASE_URL, 'max_retries': 2},
         model_config={
-            'model': 'api-mistral-small-3.2-2506',
+            'model': 'api-gpt-oss-120b',
             'max_completion_tokens': 2048,
             # # two different reasoning levels
-            'reasoning_effort': List([
-                # 'medium', 
-                'high'
-            ])
+            'reasoning_effort': 'high'
         },
         # request per minute needs to be set based on your account tier and the specific model used
         rpm_limit=120,
@@ -199,7 +196,6 @@ def load_question_set(path, encoding='utf-8'):
 
 
 def write_answer(path, results):
-    print(results.keys())
     print('writing answers to the output file')
     # question id
     question_id = results[1][0]['question_id']
@@ -215,16 +211,21 @@ def write_answer(path, results):
         answer = {}
         answer['question_id'] = question_id[i]
         answer['answer'] = answers[i]
-        try:
-            answer['sources'] = json.loads(sources[i])
-        except json.JSONDecodeError:
-            answer['sources'] = []
+        if sources[i] is None:
+            answer['sources'] = retrieved_documents[i]
+        else:
+            try:
+                answer['sources'] = json.loads(sources[i])
+            except json.JSONDecodeError:
+                print(f'{sources[i]} can not find the source')
+                answer['sources'] = []
         context = []
         for s in answer['sources']:
             if s in retrieved_documents[i]:
                 idx = retrieved_documents[i].index(s)
                 context.append(retrieved_contexts[i][idx])
             else:
+                print(s)
                 print('could not find the retrieved document')
         answer['retrieved_context'] = ' '.join(context)
         # add to the final answer list
