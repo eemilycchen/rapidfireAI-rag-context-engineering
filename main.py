@@ -34,7 +34,7 @@ from rapidfireai.automl import (
 )
 from rapidfireai import Experiment
 
-TRITON_API_KEY = Path('./api-key.txt').expanduser().read_text(encoding='utf-8').splitlines()[0].strip()
+TRITON_API_KEY = Path('~/api-key.txt').expanduser().read_text(encoding='utf-8').splitlines()[0].strip()
 BASE_URL = 'https://tritonai-api.ucsd.edu'
 DATA_DIR = './data/sourcedocs/'
 
