@@ -90,10 +90,7 @@ def main():
         'model': 'api-tgpt-embeddings',
         'api_key': TRITON_API_KEY,
         'base_url': BASE_URL,
-        'check_embedding_ctx_length': False,
-        'retry_min_seconds': 5,
-        'retry_max_seconds': 60,
-        'timeout': 120
+        'check_embedding_ctx_length': False
     }
 
     # define vector storage configurations
@@ -219,19 +216,23 @@ def write_answer(path, results):
         answer['question_id'] = question_id[i]
         answer['answer'] = answers[i].strip()
         if sources[i] is None:
-            answer['sources'] = retrieved_documents[i][:3]
+            # fallback to retrieved documents if the model generated source fails to parse
+            answer['sources'] = retrieved_documents[i][:2]
         else:
             try:
                 model_source = json.loads(sources[i])
                 answer['sources'] = []
-                if retrieved_documents[i][0] not in answer['sources']:
-                    answer['sources'].append(retrieved_documents[i][0])
+                # check if the model generated sources are in the retrieved documents
                 for s in model_source:
                     if s in retrieved_documents[i]:
                         answer['sources'].append(s)
+                # fallback to retrieved documents if the model generated sources are not in the retrieved documents
+                if len(answer['sources']) == 0:
+                    answer['sources'] = retrieved_documents[i][:2]
             except json.JSONDecodeError:
+                # fallback to retrieved documents if the model generated sources can not be decoded
                 print(f'{sources[i]} can not decode the model generated source')
-                answer['sources'] = retrieved_documents[i][:3]
+                answer['sources'] = retrieved_documents[i][:2]
         answer['retrieved_context'] = '\n\n'.join(retrieved_contexts[i][:5])
         # add to the final answer list
         output_answers.append(answer)

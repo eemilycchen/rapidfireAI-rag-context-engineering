@@ -1,15 +1,8 @@
 [
     {
         "question_id": 1,
-        "answer": "The two knob set generators currently supported by RapidFire AI for creating multi\u2011config specifications are List() for a discrete set of values and Range() for sampling from a continuous value interval.",
+        "answer": "The two knob set generators are List() for a discrete set of values and Range() for sampling from a continuous value interval.",
         "sources": [
-            {
-                "file": "configs.rst",
-                "lines": [
-                    1,
-                    39
-                ]
-            },
             {
                 "file": "configs.rst",
                 "lines": [
@@ -22,13 +15,20 @@
     },
     {
         "question_id": 2,
-        "answer": "",
+        "answer": "RapidFire AI\u2019s adaptive execution engine replaces the traditional \u201crun one configuration to completion before starting the next\u201d workflow with a shard\u2011based, interruptible execution model. The engine first randomly shreds the training or evaluation dataset into many small \u201cchunks\u201d (or shards). Instead of waiting for each config to see the entire dataset for all epochs (or for a full eval pass), RapidFire schedules **all** configurations on one shard at a time and then cycles through the shards. This lets every config start learning on the first few chunks while the others are still pending, so you see the learning behavior of all configs after only a small fraction of the data. \n\nTo make this possible on a single GPU (or across many GPUs/CPUs) the system automatically swaps adapters and base models in GPU memory using efficient shared\u2011memory caching that can spill to disk, incurring a minimal overhead of less than\u202f5\u202f% of total runtime. Because runs are interruptible, the dashboard can issue Interactive Control (IC) Ops \u2013 stop non\u2011promising runs, resume later, clone high\u2011performing runs, modify knobs, or warm\u2011start clones \u2013 all while the scheduler continues to place shards on available devices. As a result, RapidFire can compare many more configs in roughly the same wall\u2011clock time that traditional sequential execution would need for far fewer configs, and it provides early, online\u2011aggregated metrics with confidence intervals instead of waiting for the full dataset pass.\n\nIn contrast, conventional tools force a sequential schedule: each config runs to completion on the full dataset before the next config starts, offering no early visibility, no interruptible execution, and limited GPU utilization.",
         "sources": [
             {
                 "file": "difference.rst",
                 "lines": [
                     1,
                     23
+                ]
+            },
+            {
+                "file": "difference.rst",
+                "lines": [
+                    44,
+                    51
                 ]
             },
             {
@@ -41,8 +41,15 @@
             {
                 "file": "difference.rst",
                 "lines": [
-                    22,
-                    47
+                    63,
+                    91
+                ]
+            },
+            {
+                "file": "overview.rst",
+                "lines": [
+                    1,
+                    27
                 ]
             }
         ],
@@ -50,15 +57,8 @@
     },
     {
         "question_id": 3,
-        "answer": "The Experiment constructor takes three arguments:\n-\u202fexperiment_name (str): required unique name for the experiment.  \n-\u202fmode (str, optional): either \u201cfit\u201d or \u201ceval\u201d, default is \u201cfit\u201d.  \n-\u202fexperiments_path (str, optional): path to store the experiment\u2019s artifacts, default is \u201c./rapidfire_experiments\u201d.",
+        "answer": "The Experiment constructor (__init__) accepts three parameters:\u202fexperiment_name (a required string specifying a unique name for the experiment),\u202fmode (an optional string indicating the experiment mode, either \"fit\" or \"eval\", defaulting to \"fit\"), and\u202fexperiments_path (an optional string giving the path where the experiment\u2019s artifacts are stored, defaulting to \"./rapidfire_experiments\").",
         "sources": [
-            {
-                "file": "experiment.rst",
-                "lines": [
-                    1,
-                    36
-                ]
-            },
             {
                 "file": "experiment.rst",
                 "lines": [
@@ -71,7 +71,7 @@
     },
     {
         "question_id": 4,
-        "answer": "RFGridSearch only allows each knob to be a single value or a\u202fList of values; it cannot accept a Range of values and will raise an error if a Range is provided. RFRandomSearch is more flexible: each knob may be a single value, a\u202fList of values, or a\u202fRange of values. For random search, a value is uniformly sampled from each discrete List and from each continuous Range independently for each run, and this IID sampling is repeated to generate the requested number of distinct configurations.",
+        "answer": "R\u200bF\u200bG\u200br\u200bi\u200bd\u200bS\u200be\u200ba\u200br\u200bc\u200bh\u200b only accepts knobs that are a single concrete value or a\u202f:func:`List()`\u202fof discrete values; any knob defined with\u202f:func:`Range()`\u202fwill cause an error.  \n\nR\u200bF\u200bR\u200ba\u200bn\u200bd\u200bo\u200bm\u200bS\u200be\u200ba\u200br\u200bc\u200bh\u200b allows knobs to be a single value, a\u202f:func:`List()`\u202fof discrete values, **or** a\u202f:func:`Range()`\u202fof continuous values. For each run it uniformly draws a value from each discrete List and each continuous Range, constructing a knob combination, and repeats this IID sampling to produce the requested number of runs.  \n\nSource: [{\"file\":\"configs.rst\",\"lines\":[45,121]}]",
         "sources": [
             {
                 "file": "configs.rst",
@@ -83,8 +83,8 @@
             {
                 "file": "configs.rst",
                 "lines": [
-                    45,
-                    121
+                    68,
+                    93
                 ]
             }
         ],
@@ -92,34 +92,13 @@
     },
     {
         "question_id": 5,
-        "answer": "To run RapidFire AI for RAG evaluation on a machine that has no GPUs, use the Full Installation path but rely only on OpenAI model APIs \u2013 GPUs are not required in this case. Follow these steps:\n\n1. Verify you have Python\u202f3.12+ installed (`python3 --version`). RapidFire AI requires Python\u202f3.12 or later.  \n2. Create and activate a virtual environment:  \n   ```\n   python3 -m venv .venv\n   source .venv/bin/activate\n   ```  \n3. Install the RapidFire AI package from PyPI:  \n   ```\n   pip install rapidfireai\n   ```  \n4. Because of a current issue, uninstall `hf-xet` after the install:  \n   ```\n   pip uninstall -y hf-xet\n   ```  \n5. Confirm the installation succeeded:  \n   ```\n   rapidfireai --version\n   ```  \n   The output should show a version like \u201cRapidFire AI 0..14.0\u201d.  \n6. Initialize RapidFire AI for RAG evaluations (run once per virtual\u2011env or when changing GPU settings):  \n   ```\n   rapidfireai init --evals\n   ```  \n   This installs the specific dependencies required for RAG evals.  \n7. Provide a valid OpenAI API key in the config arguments of your RAG notebooks (e.g., the GSM8K or SciFact tutorials). When you use only OpenAI APIs for embedding and generation, no GPU hardware is needed.  \n8. (Optional) Start the RapidFire AI services to view results on the ML metrics dashboard:  \n   ```\n   rapidfireai start\n   ```  \n   The terminal will display a line such as \u201cRapidFire Frontend is ready\u201d and a URL (e.g., http://0.0.0.0:8853) that you can open in a browser. Starting the server is optional for RAG/config\u2011engine runs; results will also be displayed in\u2011notebook.  \n9. With the server running (or not, if you only need in\u2011notebook output), run your RAG evaluation notebooks using the `run_evals()` API as shown in the tutorial notebooks.\n\nThese steps let you set up RapidFire AI for RAG evaluation on a CPU\u2011only machine, leveraging OpenAI APIs without any GPU dependencies.",
+        "answer": "",
         "sources": [
             {
                 "file": "walkthroughrag.rst",
                 "lines": [
                     1,
                     38
-                ]
-            },
-            {
-                "file": "walkthroughrag.rst",
-                "lines": [
-                    1,
-                    38
-                ]
-            },
-            {
-                "file": "walkthroughrag.rst",
-                "lines": [
-                    33,
-                    75
-                ]
-            },
-            {
-                "file": "walkthroughrag.rst",
-                "lines": [
-                    20,
-                    107
                 ]
             },
             {
@@ -134,15 +113,8 @@
     },
     {
         "question_id": 6,
-        "answer": "The four Interactive Control (IC) Operations supported by RapidFire AI are Stop, Resume, Clone\u2011Modify, and Delete.",
+        "answer": "Stop, Resume, Clone-Modify, Delete",
         "sources": [
-            {
-                "file": "glossary.rst",
-                "lines": [
-                    12,
-                    118
-                ]
-            },
             {
                 "file": "glossary.rst",
                 "lines": [
@@ -155,15 +127,8 @@
     },
     {
         "question_id": 7,
-        "answer": "The preprocess_fn is a mandatory user\u2011provided function that is called for each batch during the run_evals pipeline, before the generator model is invoked. Its job is to prepare the inputs that will be fed to the generator \u2013 for example by performing retrieval, formatting, and prompt construction \u2013 and to return a dictionary that must include a reserved key\u202f\"prompts\" containing the fully formatted prompts (other batch fields may be copied over as needed).\n\nWhen run_evals invokes this function it automatically injects three arguments:\n\n* **batch** \u2013 a dictionary whose keys are dataset field names and whose values are lists of the examples in the current batch.  \n* **rag** \u2013 an RFLangChainRagSpec object that provides document\u2011chunk retrieval and context\u2011serialization capabilities for the leaf config.  \n* **prompt_manager** \u2013 an RFPromptManager object that supplies instructions and few\u2011shot examples for prompt creation.  \n\nThese three arguments are supplied by the system for every leaf config.",
+        "answer": "The\u202fpreprocess_fn\u202fis a required user\u2011defined function that takes each batch of data and transforms it into the inputs that will be fed to the generator model. It must return a dictionary that includes a reserved key\u202f\"prompts\"\u202fcontaining the fully formatted prompts (and may copy other batch fields as needed). The system calls this function for every batch before generation and automatically supplies three arguments:\n\n*\u202fbatch\u202f\u2013 a\u202fdict[str, list]\u202fwhere each key is a dataset field name and each value is a list of examples for that field.  \n*\u202frag\u202f\u2013 an\u202fRFLangChainRagSpec\u202fobject that provides document\u2011chunk retrieval and context serialization capabilities.  \n*\u202fprompt_manager\u202f\u2013 an\u202fRFPromptManager\u202fobject that handles instructions and few\u2011shot examples for prompt construction.\n\nThese arguments are injected by the system when\u202frun_evals\u202fexecutes the preprocessing step.  \n\n#### SOURCE: [{\"file\":\"evalsfunctions.rst\",\"lines\":[1,38]},{\"file\":\"evalsfunctions.rst\",\"lines\":[31,59]}]",
         "sources": [
-            {
-                "file": "evalsfunctions.rst",
-                "lines": [
-                    1,
-                    38
-                ]
-            },
             {
                 "file": "evalsfunctions.rst",
                 "lines": [
@@ -183,20 +148,13 @@
     },
     {
         "question_id": 8,
-        "answer": "RapidFire AI supports three vector\u2011store back\u2011ends: FAISS (the default in\u2011memory store), Pinecone (a hosted managed vector DB), and PostgreSQL\u202fPGVector (self\u2011hosted or managed). FAISS can only be used in **Create mode**, because it is an in\u2011memory index that does not persist. Both Pinecone and PGVector support all three operation modes \u2013 **Create mode** (build a new index from base documents inside RapidFire AI), **Read mode** (retrieve from a pre\u2011existing index), and **Update mode** (add new content to an existing index).",
+        "answer": "RapidFire AI supports three vector store backends: the in\u2011memory FAISS store, Pinecone, and PostgreSQL\u202fPGVector. FAISS can only be used in Create mode because it is an in\u2011memory, non\u2011persistent store. Both Pinecone and PGVector support all three modes of operation \u2013 Create mode (building a new index), Read mode (retrieving from an existing index), and Update mode (adding new documents to an existing index).",
         "sources": [
             {
                 "file": "rag_fiqa.rst",
                 "lines": [
                     32,
                     57
-                ]
-            },
-            {
-                "file": "rag_fiqa.rst",
-                "lines": [
-                    56,
-                    64
                 ]
             },
             {
@@ -216,29 +174,22 @@
             {
                 "file": "experiment.rst",
                 "lines": [
-                    192,
-                    237
-                ]
-            },
-            {
-                "file": "experiment.rst",
-                "lines": [
-                    192,
-                    237
+                    232,
+                    271
                 ]
             }
         ],
-        "retrieved_context": "with the run/config ID as the key. The value is a 2-tuple with a dictionary each for all aggregated metrics \nand all cumulative metrics.\n\n\n\nEnd\n-------\n\nEnd the current experiment to clear out relevant system state and allow you to move on to a new experiment. \nPlease do *not* run this when a :func:`run_fit()` is still running. \n\n.. py:function:: end(self) -> None\n\n\t:return: None\n\t:rtype: None\n\n\n\nGet Runs Information\n-------\n\nReturns metadata about all the runs from across all :func:`run_fit()` invocations in the current experiment. \n\n.. py:function:: get_runs_info(self) -> pd.DataFrame:\n\n\t:return: A DataFrame with the following columns: run_id, status, mlflow_run_id, completed_steps, total_steps, start_chunk_id, num_chunks_visited_curr_epoch, num_epochs_completed, error, source, ended_by, warm_started_from, config (full config dictionary)\n\n\t:rtype: pandas.DataFrame\n\n**Examples:**\n\n.. code-block:: python\n\n\t# Get metadata of all runs from this experiments so far; based on SFT notebook\n\tall_runs_info = experiment.get_runs_info()\n\tall_runs_info # Screenshot of output below\n\n.. raw:: html\n\n    <img src=\"_static/get-runs-info.png\" alt=\"Outputs of get runs info\" \n         style=\"cursor: zoom-in; max-width: 100%;\" onclick=\"this.requestFullscreen()\">\n\n\n**Notes:**\n \nThis function is useful for programmatic post-processing and/or pre-processing of runs and their config knobs.\n\nstyle=\"cursor: zoom-in; max-width: 100%;\" onclick=\"this.requestFullscreen()\">\n\n\n**Notes:**\n \nThis function is useful for programmatic post-processing and/or pre-processing of runs and their config knobs.\nFor instance, you can use it as part of new custom AutoML procedure to launch a new :func:`run_fit()` with new config \nknob values based on :func:`get_results()` from past :func:`run_fit()` invocations.\n\nWe plan to expand this API in the future to return other details about runs such as total runtime, GPU utilization, etc. based on feedback.\n\n\nGet Results\n-------\n\nReturns all metrics (including loss, eval loss, and any eval metrics defined) for all steps \nfor all runs from across all :func:`run_fit()` in the current experiment. \n\n.. py:function:: get_results(self) -> pd.DataFrame\n\n\t:return: A DataFrame with the following columns: run ID, step number, loss, and one column per metric plot displayed on the dashboard\n\t:rtype: pandas.DataFrame\n\n**Examples:**\n\n.. code-block:: python\n\n\t# Get results of all runs from this experiments so far; based on SFT notebook\n\tall_results = experiment.get_results()\n\tprint(all_results.columns) # Screenshot of output below\n\tall_results # Screenshot of output below\n\n.. raw:: html\n\n    <img src=\"_static/get-results-columns.png\" alt=\"Columns in DataFrame returned by get results\" \n         style=\"cursor: zoom-in; max-width: 100%;\" onclick=\"this.requestFullscreen()\">\n\n.. raw:: html\n\n    <img src=\"_static/get-results.png\" alt=\"Outputs of get results\"\n\nRead more here: :doc:`ML Metrics Dashboard</dashboard>`.\n\n\n\nResults\n------\n\nA single DataFrame containing all loss and eval metrics values of all runs across all epochs \nacross all :func:`run_fit()` invocations in this experiment so far. \nReturned by the :func:`get_results()`.\n\nRead more here: :doc:`API: Experiment</experiment>`.\n\n\n\nRun\n-----\n\nA central concept in RapidFire AI representing a single combination of configuration knob values\nfor a model trained with :func:`run_fit()`. \nIt is the same concept as in ML metrics dashboards such as MLflow and Weights & Biases. \nRapidFire AI assigns each run a unique integer :code:`run_id` within an experiment.\n\nRead more here: :doc:`API: Experiment</experiment>` and :doc:`ML Metrics Dashboard</dashboard>`.\n\n* The x-axis \"Step\" for the epoch-level plots represents absolute number of epochs seen by that run. So, if the :code:`epochs` is different for different runs in your experiment, they will take different numbers of steps again as above.\n\n* Please refresh the browser page to get RapidFire AI's metrics reader to pull the latest data entries from the metrics files.\n\n.. raw:: html\n\n    <img src=\"_static/mlflow-2-chart.png\" alt=\"Metrics plots on dashboard\" \n         style=\"cursor: zoom-in; max-width: 100%;\" onclick=\"this.requestFullscreen()\">\n\n\nThe dashboard picks some default colors for all runs, but you can change their colors by \nclicking the \"color circle\" next to the run number in the \"Run Name\" column. \nA color palette will pop up as shown in the screenshot below.\n\n.. raw:: html\n\n    <img src=\"_static/mlflow-3-colors.png\" alt=\"Change colors of runs\" \n         style=\"cursor: zoom-in; max-width: 100%;\" onclick=\"this.requestFullscreen()\">\n\n\nMessage Logs\n------\n\nThere are two continually appending message logs on the third and fourth tabs: \"Experiment Log\" and \n\"Interactive Control Log\", respectively. \nAll operations you run with RapidFire AI's API will be displayed on the former. \nThe latter will specifically display all the Interactive Control (IC) operations you do via the IC Ops \npanels, as shown on the screenshot below.\n\n\n.. raw:: html\n\n    <img src=\"_static/mlflow-4-log.png\" alt=\"Logs on dashboard\" \n         style=\"cursor: zoom-in; max-width: 100%;\" onclick=\"this.requestFullscreen()\">\n\nframeborder=\"0\" \n                allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" \n                referrerpolicy=\"strict-origin-when-cross-origin\" \n                allowfullscreen>\n        </iframe>\n    </div>\n\n|\n\n\nStep 4: Run the notebook cells\n-------\n\nRun the cells *one by one* as shown in the above videos. Wait for a cell to finish before running the next.\n\n* Imports\n\n* Load datasets \n\n* Create named RF experiment \n\n* Define RF RAG spec that wraps LangChain classes\n\n* Define data preprocessing and post processing functions\n\n* Define eval metrics functions per batch and for accumulation\n\n* Define RF generator spec that wraps vLLM or OpenAI classes\n\n* Define rest of multi-config knob dictionary and generate config group\n\n* Launch multi-config evals; adjust :code:`num_shards` as per desired concurrency (see `Run Evals <experiment.html#run-evals>`__ for details)\n\n\n\nStep 5: Monitor online aggregation of eval metrics on in-notebook table and/or ML metrics dashboard\n--------\n\n.. raw:: html\n\n    <img src=\"_static/evals-table.png\" alt=\"Monitor runs table and online aggregation of eval metrics\" \n         style=\"cursor: zoom-in; max-width: 100%;\" onclick=\"this.requestFullscreen()\">\n\n    <img src=\"_static/evals-online.png\" alt=\"Monitor runs table and online aggregation of eval metrics\" \n         style=\"cursor: zoom-in; max-width: 100%;\" onclick=\"this.requestFullscreen()\">\n\n    <img src=\"_static/evals-mlflow.png\" alt=\"Monitor training behaviors on ML metrics dashboard\""
+        "retrieved_context": "with the run/config ID as the key. The value is a 2-tuple with a dictionary each for all aggregated metrics \nand all cumulative metrics.\n\n\n\nEnd\n-------\n\nEnd the current experiment to clear out relevant system state and allow you to move on to a new experiment. \nPlease do *not* run this when a :func:`run_fit()` is still running. \n\n.. py:function:: end(self) -> None\n\n\t:return: None\n\t:rtype: None\n\n\n\nGet Runs Information\n-------\n\nReturns metadata about all the runs from across all :func:`run_fit()` invocations in the current experiment. \n\n.. py:function:: get_runs_info(self) -> pd.DataFrame:\n\n\t:return: A DataFrame with the following columns: run_id, status, mlflow_run_id, completed_steps, total_steps, start_chunk_id, num_chunks_visited_curr_epoch, num_epochs_completed, error, source, ended_by, warm_started_from, config (full config dictionary)\n\n\t:rtype: pandas.DataFrame\n\n**Examples:**\n\n.. code-block:: python\n\n\t# Get metadata of all runs from this experiments so far; based on SFT notebook\n\tall_runs_info = experiment.get_runs_info()\n\tall_runs_info # Screenshot of output below\n\n.. raw:: html\n\n    <img src=\"_static/get-runs-info.png\" alt=\"Outputs of get runs info\" \n         style=\"cursor: zoom-in; max-width: 100%;\" onclick=\"this.requestFullscreen()\">\n\n\n**Notes:**\n \nThis function is useful for programmatic post-processing and/or pre-processing of runs and their config knobs.\n\nstyle=\"cursor: zoom-in; max-width: 100%;\" onclick=\"this.requestFullscreen()\">\n\n\n**Notes:**\n \nThis function is useful for programmatic post-processing and/or pre-processing of runs and their config knobs.\nFor instance, you can use it as part of new custom AutoML procedure to launch a new :func:`run_fit()` with new config \nknob values based on :func:`get_results()` from past :func:`run_fit()` invocations.\n\nWe plan to expand this API in the future to return other details about runs such as total runtime, GPU utilization, etc. based on feedback.\n\n\nGet Results\n-------\n\nReturns all metrics (including loss, eval loss, and any eval metrics defined) for all steps \nfor all runs from across all :func:`run_fit()` in the current experiment. \n\n.. py:function:: get_results(self) -> pd.DataFrame\n\n\t:return: A DataFrame with the following columns: run ID, step number, loss, and one column per metric plot displayed on the dashboard\n\t:rtype: pandas.DataFrame\n\n**Examples:**\n\n.. code-block:: python\n\n\t# Get results of all runs from this experiments so far; based on SFT notebook\n\tall_results = experiment.get_results()\n\tprint(all_results.columns) # Screenshot of output below\n\tall_results # Screenshot of output below\n\n.. raw:: html\n\n    <img src=\"_static/get-results-columns.png\" alt=\"Columns in DataFrame returned by get results\" \n         style=\"cursor: zoom-in; max-width: 100%;\" onclick=\"this.requestFullscreen()\">\n\n.. raw:: html\n\n    <img src=\"_static/get-results.png\" alt=\"Outputs of get results\"\n\nRead more here: :doc:`ML Metrics Dashboard</dashboard>`.\n\n\n\nResults\n------\n\nA single DataFrame containing all loss and eval metrics values of all runs across all epochs \nacross all :func:`run_fit()` invocations in this experiment so far. \nReturned by the :func:`get_results()`.\n\nRead more here: :doc:`API: Experiment</experiment>`.\n\n\n\nRun\n-----\n\nA central concept in RapidFire AI representing a single combination of configuration knob values\nfor a model trained with :func:`run_fit()`. \nIt is the same concept as in ML metrics dashboards such as MLflow and Weights & Biases. \nRapidFire AI assigns each run a unique integer :code:`run_id` within an experiment.\n\nRead more here: :doc:`API: Experiment</experiment>` and :doc:`ML Metrics Dashboard</dashboard>`.\n\nRead more here: :doc:`API: Experiment</experiment>`.\n\n\nInteractive Control Ops (IC Ops)\n------\n\nOperations to control runs in flight during a :func:`run_fit()`.  \nRapidFire AI automatically reapportions GPU resources across runs under the hood. \nWe currently support 4 IC Ops: Stop, Resume, Clone-Modify, and Delete.\n\nRead more here: :doc:`Dashboard: Interactive Control (IC) Ops</icops>`.\n\n\nKnob\n-----\n\nA single entry in the config dictionary given for experimentation. \nA knob's value can be a singleton or set-valued (:class:`List` or :class:`Range`). \n\nRead more here: :doc:`API: Multi-Config Specification</configs>`.\n\n\nLogs\n-----\n\nFiles with entries about all operations run by RapidFire AI, including IC Ops, to aid \nmonitoring of debugging of experiment behaviors. \nThe whole experiment log is displayed on the app under the \"Experiment Log\" tab. \nLikewise, all IC Ops are displayed under their own tab next to it.\n\nRead more here: :doc:`ML Metrics Dashboard</dashboard>`.\n\n\nML Metrics Dashboard\n-----\n\nA dashboard to display plots of all ML metrics (loss and eval metrics) of all runs and \nexperiments, overlay IC Ops functionality, and display informative logs.\nRapidFire AI's current default dashboard is a fork of the popular OSS tool MLflow.\n\nRead more here: :doc:`ML Metrics Dashboard</dashboard>`.\n\n\n\nResults\n------\n\nA single DataFrame containing all loss and eval metrics values of all runs across all epochs \nacross all :func:`run_fit()` invocations in this experiment so far.\n\n* The x-axis \"Step\" for the epoch-level plots represents absolute number of epochs seen by that run. So, if the :code:`epochs` is different for different runs in your experiment, they will take different numbers of steps again as above.\n\n* Please refresh the browser page to get RapidFire AI's metrics reader to pull the latest data entries from the metrics files.\n\n.. raw:: html\n\n    <img src=\"_static/mlflow-2-chart.png\" alt=\"Metrics plots on dashboard\" \n         style=\"cursor: zoom-in; max-width: 100%;\" onclick=\"this.requestFullscreen()\">\n\n\nThe dashboard picks some default colors for all runs, but you can change their colors by \nclicking the \"color circle\" next to the run number in the \"Run Name\" column. \nA color palette will pop up as shown in the screenshot below.\n\n.. raw:: html\n\n    <img src=\"_static/mlflow-3-colors.png\" alt=\"Change colors of runs\" \n         style=\"cursor: zoom-in; max-width: 100%;\" onclick=\"this.requestFullscreen()\">\n\n\nMessage Logs\n------\n\nThere are two continually appending message logs on the third and fourth tabs: \"Experiment Log\" and \n\"Interactive Control Log\", respectively. \nAll operations you run with RapidFire AI's API will be displayed on the former. \nThe latter will specifically display all the Interactive Control (IC) operations you do via the IC Ops \npanels, as shown on the screenshot below.\n\n\n.. raw:: html\n\n    <img src=\"_static/mlflow-4-log.png\" alt=\"Logs on dashboard\" \n         style=\"cursor: zoom-in; max-width: 100%;\" onclick=\"this.requestFullscreen()\">"
     },
     {
         "question_id": 10,
-        "answer": "similarity, similarity_score_threshold, mmr",
+        "answer": "The search_cfg \u201ctype\u201d can be set to one of three values: \"similarity\", \"similarity_score_threshold\", or \"mmr\".",
         "sources": [
             {
                 "file": "ragspecs.rst",
                 "lines": [
-                    41,
-                    51
+                    88,
+                    105
                 ]
             },
             {
@@ -253,15 +204,8 @@
     },
     {
         "question_id": 11,
-        "answer": "In RapidFire AI evals, online aggregation is a statistical technique adapted from database systems research that provides running estimates of evaluation metrics together with confidence intervals as each data shard is processed. These estimates are updated in real time and converge to the exact metric values when the full dataset has been seen, allowing users to monitor, stop, or clone configurations early. RapidFire AI supports three confidence\u2011interval strategies for these projected estimates: \u201cnormal\u201d, \u201cwilson\u201d, and \u201choeffding\u201d.",
+        "answer": "Online aggregation in RapidFire AI evals is the adaptation of a database\u2011systems technique that processes the evaluation data in uniformly random shards and computes running estimates of metrics along with confidence intervals in real time, rather than waiting for the entire dataset to finish. As more shards are processed the estimates converge to the exact metric values on the full set. RapidFire AI supports three confidence\u2011interval strategies for these projected estimates: the normal (Gaussian) method, the Wilson method, and the Hoeffding bound method.",
         "sources": [
-            {
-                "file": "onlineagg.rst",
-                "lines": [
-                    84,
-                    120
-                ]
-            },
             {
                 "file": "onlineagg.rst",
                 "lines": [
@@ -270,17 +214,17 @@
                 ]
             },
             {
-                "file": "difference.rst",
-                "lines": [
-                    22,
-                    47
-                ]
-            },
-            {
                 "file": "onlineagg.rst",
                 "lines": [
                     84,
                     120
+                ]
+            },
+            {
+                "file": "promptothers.rst",
+                "lines": [
+                    93,
+                    100
                 ]
             }
         ],
@@ -288,7 +232,7 @@
     },
     {
         "question_id": 12,
-        "answer": "To warm\u2011start a cloned run, open the Clone\u2011Modify IC Op for any ongoing, stopped, or resumed run, edit the parent run\u2019s knob configuration as desired, and enable the warm\u2011start option (\u201cwarm\u2011start a clone using its parent's weights\u201d). When you click **Submit**, the clone is created and will start at the next chunk using the parent\u2019s checkpoint, inheriting the parent\u2019s learning behavior so it can achieve better evaluation metrics faster.  \n\nThe warm\u2011start is only permitted when the clone\u2019s neural architecture is exactly the same as the parent\u2019s, including any LoRA adapters; if the architectures differ the operation will fail. Currently only a single configuration can be supplied per Clone\u2011Modify operation.",
+        "answer": "",
         "sources": [
             {
                 "file": "icops.rst",
@@ -309,7 +253,7 @@
     },
     {
         "question_id": 13,
-        "answer": "The accumulate_metrics_fn is an optional, user\u2011supplied function that takes the per\u2011batch metric dictionaries produced by eval.compute_metrics_fn and combines them into final, dataset\u2011wide values. It is meant for algebraic metrics that require weighted averaging, proportions, or any custom aggregation logic beyond simple summation, and it is called exactly once after every batch has been processed.  \n\nIf you do not supply an accumulate_metrics_fn, the evaluation framework assumes that all metrics returned by compute_metrics_fn are distributive and simply adds (sums) the metric \u201cvalue\u201d fields across batches by default.  \n\n#### SOURCE: [{\"file\":\"evalsfunctions.rst\",\"lines\":[243,312]},{\"file\":\"evalsfunctions.rst\",\"lines\":[310,342]},{\"file\":\"evalsfunctions.rst\",\"lines\":[225,255]},{\"file\":\"promptothers.rst\",\"lines\":[93,100]}]",
+        "answer": "",
         "sources": [
             {
                 "file": "evalsfunctions.rst",
@@ -319,24 +263,10 @@
                 ]
             },
             {
-                "file": "evalsfunctions.rst",
-                "lines": [
-                    243,
-                    312
-                ]
-            },
-            {
-                "file": "evalsfunctions.rst",
-                "lines": [
-                    310,
-                    342
-                ]
-            },
-            {
                 "file": "promptothers.rst",
                 "lines": [
-                    93,
-                    100
+                    60,
+                    95
                 ]
             }
         ],
@@ -344,15 +274,8 @@
     },
     {
         "question_id": 14,
-        "answer": "RapidFire AI logs metrics in MLflow format by default and also supports TensorBoard and Trackio for logging metrics. You can choose which dashboards to use by providing the\u202f--tracking-backends\u202foption when starting the server\u2014list any one, two, or all three of\u202fmlflow,\u202ftensorboard,\u202for\u202ftrackio (for example\u202frapidfireai start --tracking-backends mlflow tensorboard trackio). Alternatively, you can enable them in your Python code or notebook by setting the environment variables\u202fRF_MLFLOW_ENABLED,\u202fRF_TENSORBOARD_ENABLED,\u202fand\u202fRF_TRACKIO_ENABLED\u202fto\u202f\"true\".",
+        "answer": "RapidFire AI can log metrics to three dashboards: its built\u2011in MLflow\u2011fork dashboard (MLflow format), TensorBoard, and Trackio. By default it uses the MLflow\u2011fork dashboard, but you can enable any one, any two, or all three. The selection is made when starting the server with the `--tracking-backends` argument, for example:\n\nrapidfireai start --tracking-backends mlflow tensorboard trackio\n\nYou list the desired backends (mlflow, tensorboard, trackio) in the argument. As an alternative, you can turn on each dashboard by setting environment variables in your Python code or notebook:\n\nos.environ[\"RF_MLFLOW_ENABLED\"] = \"true\"\nos.environ[\"RF_TENSORBOARD_ENABLED\"] = \"true\"\nos.environ[\"RF_TRACKIO_ENABLED\"] = \"true\"\n\nSupport for additional dashboards such as Weights &\u202fBiases and CometML is announced as forthcoming.",
         "sources": [
-            {
-                "file": "walkthroughft.rst",
-                "lines": [
-                    131,
-                    165
-                ]
-            },
             {
                 "file": "walkthroughft.rst",
                 "lines": [
@@ -372,15 +295,8 @@
     },
     {
         "question_id": 15,
-        "answer": "The LoRA knobs that are most often varied in an RFLoraConfig are  \n\n* **r (rank)** \u2013 the most critical knob. It is usually chosen as a power of\u202f2 between\u202f8 and\u202f128; common starting points are 16 or\u202f32.  \n* **lora_alpha** \u2013 controls the adaptation strength. Typical values are\u202f16,\u202f32,\u202fand\u202f64, and it is often set to about\u202f2\u202f\u00d7\u202fr (e.g.\u202f32 for r\u202f=\u202f16,\u202f64 for r\u202f=\u202f32).  \n* **target_modules** \u2013 which layers receive LoRA. The usual initial choice is the query\u2011/value\u2011only set `[\"q_proj\", \"v_proj\"]`; other common sets are `[\"q_proj\", \"k_proj\", \"v_proj\"]` or the full list of linear layers.  \n* **lora_dropout** \u2013 regularisation strength. The usual range is 0.0\u202f\u2013\u202f0.05, and it is frequently left at 0.0 (sometimes set to 0.05).  \n* **init_lora_weights** \u2013 initialization strategy. Most experiments keep the default\u202fTrue, though some try `\"gaussian\"` or `\"pissa\"`.",
+        "answer": "The LoRA knobs most frequently explored in an RFLoraConfig are:\n- **r (rank)** \u2013 the most critical knob; usually chosen as a power of two between\u202f8\u202fand\u202f128. Practitioners often start with\u202fr\u202f=\u202f16 (and sometimes also try\u202f32).\n- **lora_alpha** \u2013 controls adaptation strength; typical values are\u202f16,\u202f32,\u202fand\u202f64, often set to about twice the rank (e.g.,\u202fr\u202f=\u202f16\u202f\u2192\u202falpha\u202f=\u202f32,\u202fr\u202f=\u202f32\u202f\u2192\u202falpha\u202f=\u202f64).\n- **target_modules** \u2013 which layers receive LoRA. The common starting choice is the query/value pair\u202f[\"q_proj\",\"v_proj\"]; other frequent options are\u202f[\"q_proj\",\"k_proj\",\"v_proj\"]\u202for the full set\u202f[\"q_proj\",\"k_proj\",\"v_proj\",\"o_proj\",\"gate_proj\",\"up_proj\",\"down_proj\"].\n- **lora_dropout** \u2013 regularization coefficient; typically set between\u202f0.0\u202fand\u202f0.05, often defaulting to\u202f0.0\u202funless over\u2011fitting is observed.\n- **init_lora_weights** \u2013 initialization strategy; the default\u202fTrue\u202fis usually used, though some experiments try\u202f\"gaussian\"\u202for\u202f\"pissa\".\n\nA typical starting configuration follows the pattern\u202fr\u202f=\u202f16,\u202flora_alpha\u202f=\u202f32,\u202ftarget_modules\u202f=\u202f[\"q_proj\",\"v_proj\"],\u202flora_dropout\u202f\u2248\u202f0.0 (or\u202f0.05), and the default\u202finit_lora_weights\u202fsetting.",
         "sources": [
-            {
-                "file": "models.rst",
-                "lines": [
-                    28,
-                    59
-                ]
-            },
             {
                 "file": "models.rst",
                 "lines": [
@@ -400,15 +316,8 @@
     },
     {
         "question_id": 16,
-        "answer": "When you build a config group using List() or Range() for the retrieval \u201ck\u201d value in\u202fsearch_cfg and the \u201ctop_n\u201d value in\u202freranker_cfg, RapidFire\u202fAI automatically removes any combination where k is smaller than top_n because such a pair would be meaningless (you cannot rerank more items than were retrieved). All other (k\u202f\u2265\u202ftop_n) combinations are kept and run. For example, with k\u202f=\u202fList([5,\u202f10]) and top_n\u202f=\u202fList([5,\u202f6]), the pair k\u202f=\u202f5 and top_n\u202f=\u202f6 is dropped, while the other three pairs are valid.",
+        "answer": "RapidFire AI checks each pair of values when a config group is generated with List() or Range(). If the value assigned to\u202fk\u202fin\u202fsearch_cfg\u202fis smaller than the value assigned to\u202ftop_n\u202fin\u202freranker_cfg, that pair is considered meaningless and RapidFire AI automatically omits it. All other pairs where\u202fk\u202fis greater than or equal to\u202ftop_n\u202fare kept and run. For example, with\u202fk\u202f=\u202fList([5,\u202f10])\u202fand\u202ftop_n\u202f=\u202fList([5,\u202f6]), the combination\u202fk\u202f=\u202f5\u202fand\u202ftop_n\u202f=\u202f6 is dropped, while the remaining three combinations are valid. \n\n#### SOURCE: [{\"file\": \"ragspecs.rst\", \"lines\": [372, 382]}]",
         "sources": [
-            {
-                "file": "ragspecs.rst",
-                "lines": [
-                    372,
-                    382
-                ]
-            },
             {
                 "file": "ragspecs.rst",
                 "lines": [
@@ -421,15 +330,8 @@
     },
     {
         "question_id": 17,
-        "answer": "RapidFire AI requires Python 3.12 or newer (the python3 interpreter must be version\u202f3.12.x). To diagnose installation issues you can run the doctor command:\nrapidfireai doctor",
+        "answer": "RapidFire AI requires Python 3.12 or higher, and you can run\u202frapidfireai doctor\u202fto generate a full diagnostic report of your installation.",
         "sources": [
-            {
-                "file": "troubleshooting.rst",
-                "lines": [
-                    1,
-                    53
-                ]
-            },
             {
                 "file": "troubleshooting.rst",
                 "lines": [
@@ -442,15 +344,8 @@
     },
     {
         "question_id": 18,
-        "answer": "RapidFire\u202fAI\u2019s\u202fdocument_template is an optional callable you can pass to\u202fRFLangChainRagSpec.\u202fIt receives a LangChain\u202fDocument object and must return a string.\u202fDuring the serialize_documents step each retrieved chunk is passed through this callable, and the resulting string is inserted into the prompt as part of the context.\u202fA typical custom template might prepend a metadata field such as the title, e.g.\u202f`return f\"{doc.metadata['title']}: {doc.page_content}\"`\u202f(see ragspecs.rst\u202flines\u202f254\u2011296).\u202fIf you do not supply a document_template, RapidFire\u202fAI falls back to its built\u2011in default which formats a document as the metadata string, a newline, then the page content \u2013 effectively `\"metadata:\\ncontent\"`\u202f(see evalsfunctions.rst\u202flines\u202f58\u201169). \n\n#### SOURCE: [{\"file\":\"evalsfunctions.rst\",\"lines\":[58,69]},{\"file\":\"ragspecs.rst\",\"lines\":[254,296]},{\"file\":\"ragspecs.rst\",\"lines\":[141,172]}]",
+        "answer": "RapidFire AI\u2019s\u202fdocument_template is an optional callable you can pass to\u202fRFLangChainRagSpec.  When the RAG spec later calls\u202frag.serialize_documents, it invokes this callable for each retrieved\u202fDocument\u202fobject to turn the chunk into a string that will be inserted into the prompt.  The function receives the\u202fDocument\u202fand returns any formatted representation you want \u2013 for example, the example in the docs prepends the ingested\u202ftitle\u202fmetadata (`return f\"{doc.metadata['title']}: {doc.page_content}\"`).  If you do not supply a custom\u202fdocument_template, RapidFire AI uses a built\u2011in default template that simply concatenates the document\u2019s metadata and its text content separated by a newline (the literal template\u202f\"metadata:\\ncontent\").  \n\n#### SOURCE: [{\"file\": \"evalsfunctions.rst\", \"lines\": [58, 69]}, {\"file\": \"ragspecs.rst\", \"lines\": [254, 296]}, {\"file\": \"ragspecs.rst\", \"lines\": [141, 172]}]",
         "sources": [
-            {
-                "file": "evalsfunctions.rst",
-                "lines": [
-                    58,
-                    69
-                ]
-            },
             {
                 "file": "evalsfunctions.rst",
                 "lines": [
@@ -464,19 +359,26 @@
                     254,
                     296
                 ]
+            },
+            {
+                "file": "ragspecs.rst",
+                "lines": [
+                    141,
+                    172
+                ]
             }
         ],
         "retrieved_context": "# If a custom document_template was provided in the RAG spec (e.g., to include title metadata),\n\t\t# it is applied here; otherwise the default \"metadata:\\ncontent\" template is used.\n\t\tserialized_context = rag.serialize_documents(all_context)\n\t\tbatch[\"query_id\"] = [int(query_id) for query_id in batch[\"query_id\"]]\n \n\t\t# Each batch to contain conversational prompt, retrieved documents, and original 'query_id', 'query', 'metadata'\n\t\treturn {\n\t\t\t\"prompts\": [\n\t\t\t\t[\n\t\t\t\t\t{\"role\": \"system\", \"content\": INSTRUCTIONS},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"role\": \"user\",\n\t\t\t\t\t\t\"content\": f\"Here is some relevant context:\\n{context}. \\nNow answer the following question using the context provided earlier:\\n{question}\",\n\t\t\t\t\t},\n\t\t\t\t]\n\t\t\t\tfor question, context in zip(batch[\"query\"], serialized_context)\n\t\t\t],\n\t\t\t\"retrieved_documents\": retrieved_documents,\n\t\t\t**batch,\n\t\t}\n\n.. code-block:: python\n\n    # Example 2 from GSM8K use case: Few-shot learning preprocessing without RAG\n    def sample_preprocess_fn(batch: dict[str, list], rag: RFLangChainRagSpec, prompt_manager: RFPromptManager) -> dict[str, list]:\n\t\t\"\"\"Function to prepare the final inputs given to the generator model\"\"\"\n\n\t\treturn {\n\t\t\t\"prompts\": [\n\t\t\t\t[\n\t\t\t\t\t{\"role\": \"system\", \"content\": prompt_manager.get_instructions()},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"role\": \"user\",\n\n.. image:: /images/ragspec-2.png\n   :width: 800px\n\n\n\nDepending on the state of your use case's data, you can invoke only the Query Processing stage or both stages in one go via the same :class:`RFLangChainRagSpec` depending on what arguments are provided:\n\n* **With Preprocessing:** This creates both Document Preprocessing workers and Query Processing workers. Provide :code:`document_loader`, optional :code:`text_splitter`, :code:`embedding_cfg`, and optional :code:`vector_store_cfg`. The document preprocessing workers operate on the base data, produce chunks (if :code:`text_splitter` provided), embed the chunks (or the whole documents if :code:`text_splitter` is skipped), and store them in the vector store. If :code:`vector_store_cfg` is not provided, RapidFire AI defaults to creating a FAISS flat vector store for you.\n\n* **Without Preprocessing:** This creates only Query Processing workers that operate the optionally provided preprocessed vector store. Provide optional :code:`embedding_cfg` to apply to the queries (same as what produced the vector store), an optional :code:`retriever` and/or :code:`vector_store_cfg`, an optional :code:`search_cfg`, and an optional :code:`reranker_cfg`. Note that for plain context engineering use cases without RAG, there is no embedding, retrieval, or reranking; for few-shot prompting without RAG, you can provide :code:`embedding_cfg` and similarity search knobs for the examples.\n\n\n\n.. py:class:: RFLangChainRagSpec\n\nAPI: LangChain RAG Spec\n===============\n\nRapidFire AI's core API for defining the stages of a RAG pipeline before the generator is a wrapper around the corresponding APIs of LangChain.\nIn particular, this class specifies all of the following stages: data loading, chunking, embedding, indexing, retrieval, and reranking steps. \nNote that many of these stages are optional. \n\nMany of the arguments (knobs) here can also be :class:`List` valued or :class:`Range` valued depending \non its data type, as explained below. All this forms the base set of knob combinations from which \na config group can be produced. Also read :doc:`the Multi-Config Specification page</configs>`.\n\nNote that for plain prompt/context engineering use cases without RAG, you can skip providing this entire class. \nIf you'd like to do few-shot prompting instead, also read :doc:`API: Prompt Manager and Other Eval Config Knobs page</promptothers>`.\nHere is an illustration of the non-RAG prompt engineering workflow, with optional few-shot prompting.\n\n\n.. image:: /images/ragspec-1.png\n   :width: 600px\n\n\nRapidFire AI's execution pipeline for RAG pipelines engineering is split into 2 main stages as illustrated in the figure below:\n\n* **Document Preprocessing:** Workers operate in parallel on the base data and produce preprocessed data that is stored in a vector store.\n\n* **Query Processing:** Workers operate in parallel on the eval set examples to embed them, retrieve relevant chunks from the vector store, rerank them, construct the full context, and then generate the outputs.\n\n\n.. image:: /images/ragspec-2.png\n   :width: 800px\n\ndef metadata_func(record: dict, metadata: dict) -> dict:\n        \"\"\"Extract custom metadata fields from each source JSON record.\"\"\"\n        metadata[\"corpus_id\"] = int(record.get(\"_id\"))\n        metadata[\"title\"] = record.get(\"title\", \"\")\n        return metadata\n \n    # The document_template controls how each retrieved chunk is formatted into a string\n    # when serialized for context injection into the prompt. Here we prepend the title.\n    def custom_template(doc: Document) -> str:\n        return f\"{doc.metadata['title']}: {doc.page_content}\"\n \n    rag_cpu = RFLangChainRagSpec(\n        document_loader=DirectoryLoader(\n            path=\"datasets/scifact/\",\n            glob=\"corpus.jsonl\",\n            loader_cls=JSONLoader,\n            loader_kwargs={\n                \"jq_schema\": \".\",\n                \"content_key\": \"text\",\n                \"metadata_func\": metadata_func,  # Custom metadata extraction\n                \"json_lines\": True,\n                \"text_content\": False,\n            },\n            sample_seed=42,\n        ),\n        ...\n        vector_store_cfg={\"type\": \"faiss\"},\n        search_cfg={\"type\": \"similarity\", \"k\": 10},\n        reranker_cfg={\n            ...\n        },\n        document_template=custom_template,  # Custom formatting using ingested metadata\n    )\n\n\n.. code-block:: python\n\n    # Based on the FiQA Pinecone tutorial notebook\n    spec = ServerlessSpec(cloud=\"gcp\", region=\"us-central1\")\n\n    # Create mode\n    vector_store_cfg_create={\n        \"type\": \"pinecone\",\n\nOverview of RapidFire AI Package\n==============\n\nRapidFire AI is a new AI experiment execution framework that transforms your LLM pipeline customization \nfrom slow, sequential processes into rapid, intelligent workflows with hyperparallelized execution, \ndynamic real-time experiment control, and automatic backend optimization.\n\nFor *RAG and context engineering evals*, start here: :doc:`Install and Get Started: RAG and Context Engineering</walkthroughrag>`.\n\nFor *SFT and RFT/post-training workflows*, start here: :doc:`Install and Get Started: SFT/RFT</walkthroughft>`.\n\n\nRapidFire AI is the first system of its kind to establish live three-way communication between the IDE\nwhere the experiment is launched, a metrics display/control dashboard, and a multi-core/multi-GPU execution backend.\n\n.. image:: /images/rf-usage.png\n   :width: 800px\n\nJust pip install the :code:`rapidfireai` OSS package. It works on a CPU-only machine, a single-GPU machine, \nor a multi-GPU machine. Note that for RAG/context engineering with only closed model APIs, GPUs are not needed. \n\nLaunch the server from the command line. Then import it as any other python package in your notebook/script. \nUse our API to define and launch the configs to compare in one go. \n\nMetrics plots are automatically visualized in the ML metrics dashboard (for SFT/RFT only for now) or shown in an \nin-notebook take (for RAG/context eng. only for now). \nThe Interactive Control (IC) ops panel lets you dynamically control runs in flight: stop, resume, clone, and modify them as you wish."
     },
     {
         "question_id": 19,
-        "answer": "The\u202frun_evals()\u202ffunction returns a dictionary whose keys are the run or configuration IDs. Each value is a two\u2011element tuple: the first element is a dictionary of all aggregated metrics, and the second element is a dictionary of all cumulative metrics. In contrast,\u202frun_fit()\u202fdoes not return any data; its return value is\u202fNone.",
+        "answer": "The\u202frun_evals() function returns a dictionary whose keys are the run or configuration IDs (integers) and whose values are 2\u2011tuples. Each tuple contains two dictionaries: one with all aggregated metrics for that run/config and one with all cumulative metrics. In contrast, run_fit() does not return any value; it returns\u202fNone.",
         "sources": [
             {
                 "file": "experiment.rst",
                 "lines": [
-                    173,
-                    198
+                    145,
+                    175
                 ]
             },
             {
@@ -494,11 +396,11 @@
                 ]
             }
         ],
-        "retrieved_context": "Note that :func:`run_evals()` must be actively running for you to be able to use IC Ops.\n\nWithin an experiment, you can rerun :func:`run_evals()` as many times as you want. All of them \nwill be overlaid on the same plots on the ML metrics dashboard.\n\nThe :code:`config_group` argument allows you to construct various knob combinations for inference pipelines \nand launch them in one go. These pipelines can involve LLMs running on your GPUs, or OpenAI API calls, or both. \n\nJust like with :func:`run_fit()` above, you can provide a single config dictionary, a :code:`list` of config \ndictionaries, a config group generator output (:func:`RFGridSearch()` or :func:`RFRandomSearch()` for now), \nor even a :code:`list` with mix of configs or config group generator outputs as its elements.\nPlease see the :doc:`the Multi-Config Specification page</search>` for more details. \n\nThe :code:`num_shards` argument is identical to the :code:`num_chunks` argument of :func:`run_fit()` above. \nThat is, it let you balance the degree of concurrency for cross-config comparisons against the (minor) \nextra swapping overhead incurred. Again, we recommend at least 4, which means you will see results being \nupdated for all runs on 1/4th of the data at a time.\n\nUnlike :func:`run_fit()`, this function does have a return value. In particular, it will return a dictionary \nwith the run/config ID as the key. The value is a 2-tuple with a dictionary each for all aggregated metrics \nand all cumulative metrics.\n\n\n\nEnd\n-------\n\nAPI: Experiment \n================\n\nOverview\n--------\n\nAn \"Experiment\" is the central concept in RapidFire AI to organize and streamline your multi-config AI experimentation. \n\nEvery experiment must have a unique user-given name that is used to collate plots on the ML metrics dashboard and for saving its artifacts. \nIf you (mistakenly) reuse a previous experiment name, RapidFire AI will append a suffix akin to what filesystems do.\n\nThe Experiment class has the functions and semantics detailed below. \nAs of this writing, an experiment can operate in either :code:`\"fit\"` mode or :code:`\"eval\"` mode but not both. \nWe plan to allow both modes in the same experiment very soon.\n\n.. note::\n  Only one function in this class can be run at a time. If you interrupt a long-running function, \n  say, :func:`run_fit()` or :func:`run_evals()`, wait for up to 2min for the Python threads to be \n  cleaned up before running another function.\n\n\nExperiment Constructor \n------\n\nConstructor to instantiate a new experiment. \n\n.. py:function:: __init__(self, experiment_name: str, mode: str = \"fit\", experiments_path: str = \"./rapidfire_experiments\") -> None\n\n\t:param experiment_name: Unique name for this experiment\n\t:type experiment_name: str\n\t\n\t:param mode: Mode of this experiment, either :code:`\"fit\"` or :code:`\"eval\"`; default is :code:`\"fit\"`\n\t:type mode: str\n\t\n\t:param experiments_path: Path to a folder to store this experiment's artifacts. Default is ``\"./rapidfire_experiments\"``)\n\t:type experiments_path: str, optional\n\nstyle=\"cursor: zoom-in; max-width: 100%;\" onclick=\"this.requestFullscreen()\">\n\n\n**Notes:**\n \nThis function is useful for programmatic post-processing and/or pre-processing of runs and their config knobs.\nFor instance, you can use it as part of new custom AutoML procedure to launch a new :func:`run_fit()` with new config \nknob values based on :func:`get_results()` from past :func:`run_fit()` invocations.\n\nWe plan to expand this API in the future to return other details about runs such as total runtime, GPU utilization, etc. based on feedback.\n\n\nGet Results\n-------\n\nReturns all metrics (including loss, eval loss, and any eval metrics defined) for all steps \nfor all runs from across all :func:`run_fit()` in the current experiment. \n\n.. py:function:: get_results(self) -> pd.DataFrame\n\n\t:return: A DataFrame with the following columns: run ID, step number, loss, and one column per metric plot displayed on the dashboard\n\t:rtype: pandas.DataFrame\n\n**Examples:**\n\n.. code-block:: python\n\n\t# Get results of all runs from this experiments so far; based on SFT notebook\n\tall_results = experiment.get_results()\n\tprint(all_results.columns) # Screenshot of output below\n\tall_results # Screenshot of output below\n\n.. raw:: html\n\n    <img src=\"_static/get-results-columns.png\" alt=\"Columns in DataFrame returned by get results\" \n         style=\"cursor: zoom-in; max-width: 100%;\" onclick=\"this.requestFullscreen()\">\n\n.. raw:: html\n\n    <img src=\"_static/get-results.png\" alt=\"Outputs of get results\"\n\nRun Fit\n------\n\nThe main function to launch training (including LLM fine-tuning and post-training) and evaluation for a given config group in one go. \nSee :doc:`the Multi-Config Specification page</configs>` for more details on how to construct a config group. \n\n.. py:function:: run_fit(self, param_config: Any, create_model_fn: Callable, train_dataset: Dataset, eval_dataset: Dataset, num_chunks: int, seed: int=42, num_gpus: int) -> None:\n\n\t:param param_config: A train config knob dictionary, a generated config group, or a :code:`list` of configs or config groups\n\t:type param_config: Train config-group or list as described in :doc:`the Multi-Config Specification page</configs>`\n\n\t:param create_model_fn: User-given function to create a model instance; a single cfg is passed as input by the system\n\t:type create_model_fn: Callable\n\n\t:param train_dataset: Training dataset\n\t:type train_dataset: Dataset\n\n\t:param eval_dataset: Evaluation dataset to measure eval metrics\n\t:type eval_dataset: Dataset\n\n\t:param num_chunks: Number of logical splits of data to control degree of concurrency for multi-config execution (recommended: at least 4)\n\t:type num_chunks: int\n\n\t:param seed: Seed for any randomness used in your code (default: 42)\n\t:type seed: int, optional\n\n\t:param num_gpus: Number of GPUs to use per run/config for each config represented in :code:`param_config`; overriden by any :code:`num_gpus` given in :code:`RFModelConfig` for those associated configs.\n\t:type num_gpus: int, optional\n\n\t:return: None\n\t:rtype: None\n\nRead more here: :doc:`ML Metrics Dashboard</dashboard>`.\n\n\n\nResults\n------\n\nA single DataFrame containing all loss and eval metrics values of all runs across all epochs \nacross all :func:`run_fit()` invocations in this experiment so far. \nReturned by the :func:`get_results()`.\n\nRead more here: :doc:`API: Experiment</experiment>`.\n\n\n\nRun\n-----\n\nA central concept in RapidFire AI representing a single combination of configuration knob values\nfor a model trained with :func:`run_fit()`. \nIt is the same concept as in ML metrics dashboards such as MLflow and Weights & Biases. \nRapidFire AI assigns each run a unique integer :code:`run_id` within an experiment.\n\nRead more here: :doc:`API: Experiment</experiment>` and :doc:`ML Metrics Dashboard</dashboard>`."
+        "retrieved_context": "Note that :func:`run_evals()` must be actively running for you to be able to use IC Ops.\n\nWithin an experiment, you can rerun :func:`run_evals()` as many times as you want. All of them \nwill be overlaid on the same plots on the ML metrics dashboard.\n\nThe :code:`config_group` argument allows you to construct various knob combinations for inference pipelines \nand launch them in one go. These pipelines can involve LLMs running on your GPUs, or OpenAI API calls, or both. \n\nJust like with :func:`run_fit()` above, you can provide a single config dictionary, a :code:`list` of config \ndictionaries, a config group generator output (:func:`RFGridSearch()` or :func:`RFRandomSearch()` for now), \nor even a :code:`list` with mix of configs or config group generator outputs as its elements.\nPlease see the :doc:`the Multi-Config Specification page</search>` for more details. \n\nThe :code:`num_shards` argument is identical to the :code:`num_chunks` argument of :func:`run_fit()` above. \nThat is, it let you balance the degree of concurrency for cross-config comparisons against the (minor) \nextra swapping overhead incurred. Again, we recommend at least 4, which means you will see results being \nupdated for all runs on 1/4th of the data at a time.\n\nUnlike :func:`run_fit()`, this function does have a return value. In particular, it will return a dictionary \nwith the run/config ID as the key. The value is a 2-tuple with a dictionary each for all aggregated metrics \nand all cumulative metrics.\n\n\n\nEnd\n-------\n\nstyle=\"cursor: zoom-in; max-width: 100%;\" onclick=\"this.requestFullscreen()\">\n\n\n**Notes:**\n \nThis function is useful for programmatic post-processing and/or pre-processing of runs and their config knobs.\nFor instance, you can use it as part of new custom AutoML procedure to launch a new :func:`run_fit()` with new config \nknob values based on :func:`get_results()` from past :func:`run_fit()` invocations.\n\nWe plan to expand this API in the future to return other details about runs such as total runtime, GPU utilization, etc. based on feedback.\n\n\nGet Results\n-------\n\nReturns all metrics (including loss, eval loss, and any eval metrics defined) for all steps \nfor all runs from across all :func:`run_fit()` in the current experiment. \n\n.. py:function:: get_results(self) -> pd.DataFrame\n\n\t:return: A DataFrame with the following columns: run ID, step number, loss, and one column per metric plot displayed on the dashboard\n\t:rtype: pandas.DataFrame\n\n**Examples:**\n\n.. code-block:: python\n\n\t# Get results of all runs from this experiments so far; based on SFT notebook\n\tall_results = experiment.get_results()\n\tprint(all_results.columns) # Screenshot of output below\n\tall_results # Screenshot of output below\n\n.. raw:: html\n\n    <img src=\"_static/get-results-columns.png\" alt=\"Columns in DataFrame returned by get results\" \n         style=\"cursor: zoom-in; max-width: 100%;\" onclick=\"this.requestFullscreen()\">\n\n.. raw:: html\n\n    <img src=\"_static/get-results.png\" alt=\"Outputs of get results\"\n\nRun Fit\n------\n\nThe main function to launch training (including LLM fine-tuning and post-training) and evaluation for a given config group in one go. \nSee :doc:`the Multi-Config Specification page</configs>` for more details on how to construct a config group. \n\n.. py:function:: run_fit(self, param_config: Any, create_model_fn: Callable, train_dataset: Dataset, eval_dataset: Dataset, num_chunks: int, seed: int=42, num_gpus: int) -> None:\n\n\t:param param_config: A train config knob dictionary, a generated config group, or a :code:`list` of configs or config groups\n\t:type param_config: Train config-group or list as described in :doc:`the Multi-Config Specification page</configs>`\n\n\t:param create_model_fn: User-given function to create a model instance; a single cfg is passed as input by the system\n\t:type create_model_fn: Callable\n\n\t:param train_dataset: Training dataset\n\t:type train_dataset: Dataset\n\n\t:param eval_dataset: Evaluation dataset to measure eval metrics\n\t:type eval_dataset: Dataset\n\n\t:param num_chunks: Number of logical splits of data to control degree of concurrency for multi-config execution (recommended: at least 4)\n\t:type num_chunks: int\n\n\t:param seed: Seed for any randomness used in your code (default: 42)\n\t:type seed: int, optional\n\n\t:param num_gpus: Number of GPUs to use per run/config for each config represented in :code:`param_config`; overriden by any :code:`num_gpus` given in :code:`RFModelConfig` for those associated configs.\n\t:type num_gpus: int, optional\n\n\t:return: None\n\t:rtype: None\n\nRead more here: :doc:`ML Metrics Dashboard</dashboard>`.\n\n\n\nResults\n------\n\nA single DataFrame containing all loss and eval metrics values of all runs across all epochs \nacross all :func:`run_fit()` invocations in this experiment so far. \nReturned by the :func:`get_results()`.\n\nRead more here: :doc:`API: Experiment</experiment>`.\n\n\n\nRun\n-----\n\nA central concept in RapidFire AI representing a single combination of configuration knob values\nfor a model trained with :func:`run_fit()`. \nIt is the same concept as in ML metrics dashboards such as MLflow and Weights & Biases. \nRapidFire AI assigns each run a unique integer :code:`run_id` within an experiment.\n\nRead more here: :doc:`API: Experiment</experiment>` and :doc:`ML Metrics Dashboard</dashboard>`.\n\neval_dataset = get_gsm8k_questions(split=\"test\").select(range(32)) # 32 instead of 100\n\n* Define example processing function\n\n* Create named RF experiment \n\n* Define custom eval metrics function\n\n* Define multi-config knobs for model, LoRA, and SFT Trainer using RapidFire AI wrapper APIs\n\n* Define model creation function for all model types across configs\n\n* Generate config group you want to compare in one go\n\n* Launch multi-config training; adjust :code:`num_chunks` as per desired concurrency (see `Run Fit <experiment.html#run-fit>`__ for details)\n\n  .. code-block:: python\n\n     # Launch training of all configs in the config_group with swap granularity of 4 chunks\n     experiment.run_fit(config_group, sample_create_model, train_dataset, eval_dataset, num_chunks=4, seed=42)\n\n  Note that in the same experiment, you can run as many :func:`run_fit()` as you want. All their runs will be superimposed on the same plots on the dashboard.\n\n\n\nStep 5: Monitor training behaviors on ML metrics dashboard\n--------\n\n.. raw:: html\n\n    <img src=\"_static/step7.png\" alt=\"Monitor training behaviors on ML metrics dashboard\" \n         style=\"cursor: zoom-in; max-width: 100%;\" onclick=\"this.requestFullscreen()\">\n\n\nStep 6: Interactive Control (IC) Ops: Stop, Clone-Modify; check their results \n-----\n\n.. raw:: html\n\n    <img src=\"_static/icop-stop.png\" alt=\"IC Op: Stop\" \n         style=\"cursor: zoom-in; max-width: 100%;\" onclick=\"this.requestFullscreen()\">\n\n\n.. raw:: html"
     },
     {
         "question_id": 20,
-        "answer": "RapidFire AI supports two generator config types: (1) a self\u2011hosted open\u2011LLM config, implemented as\u202fRFvLLMModelConfig, which wraps the vLLM model configuration and sampling parameters; and (2) a closed\u2011model LLM API config, which wraps the OpenAI API.",
+        "answer": "RapidFire AI supports two generator config types: one for self\u2011hosted open LLMs, which wraps the model configuration of vLLM, and one for closed\u2011model LLM APIs, which wraps the OpenAI API.",
         "sources": [
             {
                 "file": "generators.rst",
@@ -512,15 +414,8 @@
     },
     {
         "question_id": 21,
-        "answer": "In RFvLLMModelConfig the sampling_params dictionary can configure the following knobs for text generation:\u202ftemperature \u2013 a float that controls randomness (default\u202f1.0; 0.0 forces greedy sampling, lower values make output more deterministic),\u202ftop_p \u2013 a float that sets the cumulative probability cutoff for token selection (must be in (0,\u202f1]; default\u202f1.0, setting to\u202f1 considers all tokens), and\u202fmax_tokens \u2013 an integer specifying the maximum number of tokens to generate per output sequence.",
+        "answer": "In RFvLLMModelConfig you can set the sampling_params dictionary with keys\u202f\"temperature\" (float, default\u202f1.0),\u202f\"top_p\" (float, default\u202f1.0) and\u202f\"max_tokens\" (maximum number of tokens to generate per output sequence).",
         "sources": [
-            {
-                "file": "generators.rst",
-                "lines": [
-                    36,
-                    66
-                ]
-            },
             {
                 "file": "generators.rst",
                 "lines": [
@@ -533,15 +428,8 @@
     },
     {
         "question_id": 22,
-        "answer": "RFOpenAIAPIModelConfig provides two rate\u2011limiting knobs:\n\n* **rpm_limit** \u2013 an integer specifying the maximum number of requests per minute that may be sent to the OpenAI API.  It is used for throttling so that the client does not exceed the request\u2011per\u2011minute quota for the chosen OpenAI tier or model.  \n* **tpm_limit** \u2013 an integer specifying the maximum number of tokens per minute that may be processed by the OpenAI API.  It also throttles traffic to keep token usage within the limits imposed by OpenAI.\n\nBoth parameters exist to automatically keep the client\u2019s request and token consumption within the quotas published by OpenAI, preventing \u201cquota\u2011exceeded\u201d errors.  \n\n#### SOURCE: [{\"file\":\"generators.rst\",\"lines\":[107,125]}]",
+        "answer": "RFOpenAIAPIModelConfig provides two rate\u2011limiting parameters: rpm_limit, which sets a limit on the number of requests per minute sent to the OpenAI API, and tpm_limit, which sets a limit on the number of tokens per minute processed by the API. Both parameters are used for throttling to avoid exceeding the OpenAI API quotas and to stay within the per\u2011model and tier\u2011specific rate limits published by OpenAI.",
         "sources": [
-            {
-                "file": "generators.rst",
-                "lines": [
-                    62,
-                    95
-                ]
-            },
             {
                 "file": "generators.rst",
                 "lines": [
@@ -554,27 +442,13 @@
     },
     {
         "question_id": 23,
-        "answer": "RFPromptManager chooses the few\u2011shot examples for each query by encoding the query and all candidate examples with the embedding model supplied in\u202fembedding_cfg, then applying the example selector class (example_selector_cls). If SemanticSimilarityExampleSelector is used (the default in examples), it computes semantic similarity between the query embedding and each example embedding and returns the\u202fk\u202fmost similar examples (k defaults to\u202f3\u202fbut can be a List or Range). Alternatively, MaxMarginalRelevanceExampleSelector can be chosen to favor diversity while still being relevant. The selection is performed per input query when get_fewshot_examples(user_queries=\u2026) is called, and the selected examples are then formatted with example_prompt_template for inclusion in the prompt.#### SOURCE: [{\"file\":\"promptothers.rst\",\"lines\":[1,23]},{\"file\":\"promptothers.rst\",\"lines\":[22,34]},{\"file\":\"promptothers.rst\",\"lines\":[33,70]},{\"file\":\"evalsfunctions.rst\",\"lines\":[43,48]}]",
+        "answer": "RFPromptManager dynamically picks few\u2011shot examples for each query by embedding the query and all candidate examples using the embedding class supplied in\u202fembedding_cfg (e.g.,\u202fHuggingFaceEmbeddings or\u202fOpenAIEmbeddings). It then hands these embeddings to a LangChain example selector, specified by\u202fexample_selector_cls. If\u202fSemanticSimilarityExampleSelector\u202fis used, the selector returns the\u202fk\u202fmost semantically similar examples; if\u202fMaxMarginalRelevanceExampleSelector\u202fis used, it returns a set of examples that are both relevant and diverse. The\u202fk\u202fparameter controls how many examples are retrieved (default\u202f3, but can be a list of values). The selection is performed per input query via\u202fprompt_manager.get_fewshot_examples\u202fso that each prompt contains the most similar (or diverse) examples for that specific query.",
         "sources": [
             {
                 "file": "promptothers.rst",
                 "lines": [
                     1,
                     23
-                ]
-            },
-            {
-                "file": "promptothers.rst",
-                "lines": [
-                    1,
-                    23
-                ]
-            },
-            {
-                "file": "promptothers.rst",
-                "lines": [
-                    22,
-                    34
                 ]
             },
             {
@@ -585,10 +459,10 @@
                 ]
             },
             {
-                "file": "evalsfunctions.rst",
+                "file": "promptothers.rst",
                 "lines": [
-                    43,
-                    48
+                    22,
+                    34
                 ]
             }
         ],
@@ -596,15 +470,8 @@
     },
     {
         "question_id": 24,
-        "answer": "The eval config dictionary can include the following knobs besides the generator: batch_size (int), preprocess_fn (callable), postprocess_fn (callable, optional), compute_metrics_fn (callable), accumulate_metrics_fn (callable, optional), and online_strategy_kwargs (optional dict of string keys to any values).",
+        "answer": "Apart from the generator, the eval config dictionary can contain the following knobs:\u202fbatch_size (int), preprocess_fn (Callable), postprocess_fn (Callable, optional), compute_metrics_fn (Callable), accumulate_metrics_fn (Callable, optional), and online_strategy_kwargs (dict[str, Any], optional). Each of these can also be specified as a knob\u2011set generator using\u202fList()\u202for\u202fRange().",
         "sources": [
-            {
-                "file": "promptothers.rst",
-                "lines": [
-                    60,
-                    95
-                ]
-            },
             {
                 "file": "promptothers.rst",
                 "lines": [
@@ -617,7 +484,7 @@
     },
     {
         "question_id": 25,
-        "answer": "The user\u2011provided\u202fcreate_model_fn\u202fmust return a two\u2011element tuple: the initialized Hugging\u202fFace model (a\u202ftransformers.PreTrainedModel, such as\u202fAutoModelForCausalLM, AutoModelForSeq2SeqLM, etc.) and its corresponding tokenizer (a\u202ftransformers.PreTrainedTokenizer, e.g.,\u202fAutoTokenizer). RapidFire\u202fAI invokes this function each time it creates a trainer object for a run\u2014that is, for every leaf configuration when\u202frun_fit\u202fstarts training a specific run.",
+        "answer": "The user\u2011provided\u202fcreate_model_fn\u202fmust return a two\u2011element tuple: the initialized HuggingFace\u202fPreTrainedModel\u202f(e.g.,\u202fAutoModelForCausalLM,\u202fAutoModelForSeq2SeqLM,\u202fetc.) and its corresponding\u202fPreTrainedTokenizer.  \nRapidFire AI calls this function automatically when it creates a trainer object for each run (i.e., for every leaf config) during the execution of\u202frun_fit().  \n\n#### SOURCE: [{\"file\":\"fitfunctions.rst\",\"lines\":[1,35]},{\"file\":\"fitfunctions.rst\",\"lines\":[27,69]}]",
         "sources": [
             {
                 "file": "fitfunctions.rst",
@@ -629,15 +496,8 @@
             {
                 "file": "fitfunctions.rst",
                 "lines": [
-                    1,
-                    35
-                ]
-            },
-            {
-                "file": "experiment.rst",
-                "lines": [
-                    68,
-                    98
+                    27,
+                    69
                 ]
             }
         ],
@@ -645,15 +505,8 @@
     },
     {
         "question_id": 26,
-        "answer": "Reward functions in RapidFire AI are user\u2011provided callables that are passed to the\u202freward_funcs\u202fparameter of\u202fRFModelConfig\u202fand are invoked by the underlying HuggingFace trainer on the generated outputs during GRPO training. For each generation TRL injects several arguments into the function:\u202fprompts\u202f(the list of input prompts that produced the completions, either as strings or as lists of message dictionaries),\u202fcompletions\u202f(the list of generated completions in the same format),\u202fcompletions_ids\u202f(the token\u2011ID sequences for each completion), and\u202ftrainer_state\u202f(the current\u202ftransformers.TrainerState\u202fobject). In addition, TRL supplies any other dataset columns (except the prompt column) as keyword arguments, so the function signature can include\u202f**kwargs\u202fand may use only a subset of the main arguments. The reward function must return a list of float scores\u2014one per completion\u2014or\u202fNone\u202ffor examples where a reward is not applicable.",
+        "answer": "In RapidFire\u202fAI, reward functions are user\u2011defined callables that are supplied to the\u202freward_funcs\u202fargument of\u202fRFModelConfig\u202fand are called by the underlying Hugging\u202fFace\u202fTRL trainer on the fly for each batch of generated outputs during GRPO training. Each function receives the inputs that produced the completions, evaluates them, and must return a list of float scores (one per completion) or\u202fNone\u202fif the reward does not apply. The return list supplies the reward signal used by the GRPO algorithm.  \n\nTRL injects the following arguments into every reward function as keyword arguments:  \n\n-\u202fprompts\u202f\u2013 a list of the input prompts that led to the completions (either a list of strings or a list of message dictionaries, depending on whether the dataset is in standard or conversational format).  \n-\u202fcompletions\u202f\u2013 a list of the generated completions corresponding to the prompts (same possible formats as\u202fprompts).  \n-\u202fcompletions_ids\u202f\u2013 a list of token\u2011ID sequences for each completion.  \n-\u202ftrainer_state\u202f\u2013 the current\u202ftransformers.TrainerState, which can be used for dynamic reward schemes such as curriculum learning.  \n-\u202f**kwargs\u202f\u2013 any additional dataset columns (e.g., a \u201cground_truth\u201d column) are passed here; the function signature must include\u202f**kwargs\u202feven if only a subset of the above arguments is used.  \n\nThus, reward functions in GRPO receive the prompts, completions, token IDs, trainer state, and any extra dataset fields, compute a numeric score per completion, and feed that back to the training loop.",
         "sources": [
-            {
-                "file": "fitfunctions.rst",
-                "lines": [
-                    214,
-                    234
-                ]
-            },
             {
                 "file": "fitfunctions.rst",
                 "lines": [
@@ -673,15 +526,8 @@
     },
     {
         "question_id": 27,
-        "answer": "RFSFTConfig lets you set the same training\u2011time knobs that the Hugging\u202fFace TRL SFT trainer uses. In the example configuration you can specify:\n\n- learning_rate  \n- lr_scheduler_type  \n- per_device_train_batch_size  \n- per_device_eval_batch_size  \n- gradient_accumulation_steps  \n- num_train_epochs  \n- logging_steps  \n- eval_strategy  \n- eval_steps  \n- fp16 (or bf16)  \n- save_strategy  \n\nThese arguments control learning\u2011rate, scheduler, batch sizes, gradient accumulation, epoch count, logging and evaluation intervals, mixed\u2011precision mode, and checkpoint saving.\n\nRFSFTConfig is a thin wrapper around the Hugging\u202fFace\u202fTRL\u202f`SFTConfig`. Apart from allowing each argument to be given as a single value, a list, or a range (to enable multi\u2011config generation), it preserves all of the semantics and behavior of the original TRL SFT trainer.",
+        "answer": "RFSFTConfig is a thin wrapper around the\u202fSFTConfig\u202fclass in Hugging\u202fFace\u2019s\u202fTRL library, so it accepts the same training\u2011specific arguments that the HF SFT trainer does. In RapidFire\u202fAI you can set arguments such as\u202flearning_rate,\u202flr_scheduler_type,\u202fper_device_train_batch_size,\u202fper_device_eval_batch_size,\u202fgradient_accumulation_steps,\u202fnum_train_epochs,\u202flogging_steps,\u202feval_strategy,\u202feval_steps,\u202ffp16\u202f(and its counterpart\u202fbf16\u202fif desired),\u202fsave_strategy, and any other knobs defined in the HF\u202fSFTConfig. The only difference is that each of these knobs may be given a\u202fList\u202for\u202fRange\u202fvalue in\u202fRFSFTConfig\u202fto generate multiple configuration combinations, while the underlying semantics of the HF\u202fSFT trainer are preserved. \n\n#### SOURCE: [{\"file\":\"trainers.rst\",\"lines\":[1,28]}]",
         "sources": [
-            {
-                "file": "trainers.rst",
-                "lines": [
-                    1,
-                    28
-                ]
-            },
             {
                 "file": "trainers.rst",
                 "lines": [
@@ -694,15 +540,8 @@
     },
     {
         "question_id": 28,
-        "answer": "RFDPOConfig is a thin wrapper around Hugging Face\u2019s DPO trainer configuration (DPOConfig) and therefore preserves the semantics of the DPO trainer. RFGRPOConfig is a thin wrapper around Hugging Face\u2019s GRPO trainer configuration (GRPOConfig) and therefore preserves the semantics of the GRPO trainer. The only functional distinction between them is the underlying algorithm they target \u2013 DPO versus GRPO \u2013 while both support multi\u2011config specifications where individual arguments can be given as List or Range values.",
+        "answer": "RFDPOConfig and RFGRPOConfig are both thin wrappers around Hugging\u202fFace\u202fTRL trainer configs, but they target different training algorithms.  \n\n*\u202fRFDPOConfig wraps the DPO (Direct Preference Optimization) trainer. It preserves the semantics of HF\u202fTRL\u2019s DPO trainer and exposes DPO\u2011specific arguments such as\u202fmodel_adapter_name,\u202fref_adapter_name,\u202fforce_use_ref_model,\u202floss_type,\u202fbeta,\u202fmax_prompt_length,\u202fmax_completion_length,\u202flearning_rate,\u202foptim,\u202fetc. The documentation notes that the only change is that any of its arguments can be given as a\u202fList\u202for\u202fRange\u202fto enable multi\u2011config knob combinations. An example also shows how an FSDP configuration can be supplied for DPO.  \n\n*\u202fRFGRPOConfig wraps the GRPO trainer. It preserves the semantics of HF\u202fTRL\u2019s GRPO trainer and provides GRPO\u2011specific arguments such as\u202flearning_rate,\u202fwarmup_ratio,\u202fweight_decay,\u202fmax_grad_norm,\u202fadam_beta1,\u202fadam_beta2,\u202fnum_generations,\u202flr_scheduler_type,\u202fper_device_train_batch_size,\u202fgradient_accumulation_steps,\u202fetc. As with RFDPOConfig, the sole difference highlighted is that its arguments can be List\u2011 or Range\u2011valued for multi\u2011config generation. The documentation also mentions that out\u2011of\u2011the\u2011box FSDP support for GRPO is still pending.  \n\nThus the key distinction is the underlying trainer they wrap (DPO vs\u202fGRPO) and the set of algorithm\u2011specific hyperparameters they expose, while both share the ability to accept List/Range values for knobs.  \n\n#### SOURCE: [{\"file\":\"trainers.rst\",\"lines\":[109,146]},{\"file\":\"trainers.rst\",\"lines\":[179,211]}]",
         "sources": [
-            {
-                "file": "trainers.rst",
-                "lines": [
-                    140,
-                    180
-                ]
-            },
             {
                 "file": "trainers.rst",
                 "lines": [
@@ -722,15 +561,8 @@
     },
     {
         "question_id": 29,
-        "answer": "In RapidFire\u202fAI a \u201cleaf config\u201d is a single concrete configuration \u2013 a dictionary containing one specific value for each experiment knob after any set\u2011valued knobs (lists or ranges) have been expanded. RapidFire\u202fAI creates exactly one run for each leaf config, injecting the leaf config values via the\u202f`model_config` argument of\u202f`create_model_fn()`. Thus a run is the execution of a leaf config and is identified by a unique\u202f`run_id` within the experiment.",
+        "answer": "A leaf config is a single combination of configuration knob values taken from a config dictionary. When a config dictionary includes set\u2011valued knobs (lists or ranges), each possible combination of those knob values is called a \u201cleaf\u201d config. RapidFire AI creates exactly one run for each leaf config, injecting the config\u2019s values via the\u202fmodel_config\u202fargument of your\u202fcreate_model_fn()\u202ffunction. In this sense, a run is the execution of a specific leaf config and is identified by a unique\u202frun_id\u202fwithin the experiment.",
         "sources": [
-            {
-                "file": "glossary.rst",
-                "lines": [
-                    1,
-                    42
-                ]
-            },
             {
                 "file": "glossary.rst",
                 "lines": [
@@ -750,15 +582,8 @@
     },
     {
         "question_id": 30,
-        "answer": "The four tabs are Table, Chart, Experiment Log, and Interactive Control (IC) Log.",
+        "answer": "The main Experiments page has four tabs: Table, Chart, Experiment Log, and Interactive Control (IC) Log.",
         "sources": [
-            {
-                "file": "dashboard.rst",
-                "lines": [
-                    1,
-                    43
-                ]
-            },
             {
                 "file": "dashboard.rst",
                 "lines": [
@@ -771,15 +596,8 @@
     },
     {
         "question_id": 31,
-        "answer": "The recommended approach is to clear out the \u201c.cache\u201d folder in your home directory that Hugging Face creates when importing base models, because the base models from one experiment are not needed for another. If you need even more free space, you should delete or move the artifact files from your experiments to other or remote storage. Note that RapidFire AI only saves the trained LoRA adapters in the checkpoints, not the base models.",
+        "answer": "The recommended way to recover storage when you have exhausted space is to delete the \u201c.cache\u201d directory in your home folder that Hugging Face creates for importing base models, since those imported models are not needed by other experiments and can be safely removed. If you need even more space, you should also clean up the artifacts produced by your experiments\u2014either delete unneeded files or move them to another or remote storage. Note that RapidFire\u202fAI only stores the trained LoRA adapters in checkpoints, not the base models, so deleting the cache is safe.",
         "sources": [
-            {
-                "file": "issues.rst",
-                "lines": [
-                    37,
-                    65
-                ]
-            },
             {
                 "file": "issues.rst",
                 "lines": [
@@ -792,15 +610,8 @@
     },
     {
         "question_id": 32,
-        "answer": "The SFT tutorial uses the \u201cBitext customer support\u201d dataset, sampling 5,000 training examples (and 200 evaluation examples). It compares two base model architectures: Llama\u20113.1\u20118B\u2011Instruct and Mistral\u20117B\u2011Instruct\u2011v0.3.",
+        "answer": "The SFT tutorial uses the \u201cBitext customer support\u201d dataset, sampling 5,000 training examples (with 200 evaluation examples). It compares two base model architectures: Llama\u20113.1\u20118B\u2011Instruct and Mistral\u20117B\u2011Instruct\u2011v0.3.",
         "sources": [
-            {
-                "file": "sft.rst",
-                "lines": [
-                    1,
-                    17
-                ]
-            },
             {
                 "file": "sft.rst",
                 "lines": [
@@ -820,15 +631,8 @@
     },
     {
         "question_id": 33,
-        "answer": "The DPO tutorial explores four training configurations, each tied to a particular loss formulation:\n\n* **Basic Bradley\u2011Terry** \u2013 uses the standard sigmoid loss (with medium\u2011capacity LoRA rank\u202f64 and a large \u03b2).  \n* **High divergence** \u2013 employs a high\u2011capacity LoRA (rank\u202f128) and a small \u03b2 to push the policy away from the reference model; the specific loss type isn\u2019t named in the snippet.  \n* **Robust loss** \u2013 uses a robust loss type together with label smoothing to handle noisy preference data.  \n* **Combined loss** \u2013 applies a weighted mixture of three losses: sigmoid loss, a BCO\u2011pair loss, and an SFT loss.",
+        "answer": "The tutorial explores four DPO training configurations: Basic Bradley\u2011Terry, which uses the standard sigmoid loss; High divergence, which uses a high\u2011capacity LoRA (rank\u202f128) and a small beta to encourage divergence from the reference model (the loss type is not explicitly changed in the documentation); Robust loss, which employs a robust loss type with label smoothing; and Combined loss, which applies a weighted combination of sigmoid, BCO\u2011pair, and SFT losses.",
         "sources": [
-            {
-                "file": "dpo.rst",
-                "lines": [
-                    28,
-                    47
-                ]
-            },
             {
                 "file": "dpo.rst",
                 "lines": [
@@ -841,13 +645,13 @@
     },
     {
         "question_id": 34,
-        "answer": "Correctness reward \u2013 gives 2.0 points when the model\u2019s answer matches the ground\u2011truth answer exactly.  \nInteger reward \u2013 gives 0.5 points for producing a numeric answer, i.e., validates that the output is a number in the expected format.  \nStrict format reward \u2013 gives 0.5 points for exactly matching the required XML formatting (exact <reasoning> and <answer> tags).  \nSoft format reward \u2013 gives 0.5 points for following a more lenient XML formatting rule, allowing flexible placement of tags while still conforming to the expected structure.  \nXML count reward \u2013 gives up to 0.5 points as a fine\u2011grained reward for proper use and count of XML tags and overall XML structure.  \n\n#### SOURCE: [{\"file\":\"grpo.rst\",\"lines\":[25,48]}]",
+        "answer": "The GRPO tutorial for mathematical reasoning uses five custom reward functions:\n1. Correctness reward \u2013 awards 2.0 points when the model\u2019s answer matches the ground\u2011truth answer exactly. \n2. Integer reward \u2013 awards 0.5 points for producing a numeric answer, ensuring the output is in the correct numeric format. \n3. Strict format reward \u2013 awards 0.5 points for exact compliance with the required XML formatting. \n4. Soft format reward \u2013 awards 0.5 points for meeting a more flexible (lenient) XML formatting criterion. \n5. XML count reward \u2013 provides a fine\u2011grained reward of up to 0.5 points for proper usage and count of XML tags and overall structure.",
         "sources": [
             {
                 "file": "grpo.rst",
                 "lines": [
-                    1,
-                    31
+                    25,
+                    48
                 ]
             }
         ],
@@ -855,7 +659,7 @@
     },
     {
         "question_id": 35,
-        "answer": "The SciFact tutorial builds a RAG pipeline that uses OpenAI\u2019s text\u2011embedding\u20113\u2011small model for embeddings and a FAISS vector store with CPU\u2011based exact search. Documents are split into 512\u2011token chunks with a 32\u2011token overlap using recursive character splitting and tiktoken encoding. An initial retrieval step pulls the top\u201115 documents, which are then reranked by the cross\u2011encoder\u202f/ms\u2011marco\u2011MiniLM\u2011L6\u2011v2 model to keep the top\u20115 final documents, and a custom document template includes each document\u2019s title together with its content. The only configuration knobs that are varied are the generator model (gpt\u20115\u2011mini versus gpt\u20114o) and the retrieval/search strategy (similarity search versus maximum marginal relevance), giving a total of four configurations (2\u202f\u00d7\u202f2). \n#### SOURCE: [{\"file\":\"rag_scifact.rst\",\"lines\":[1,34]},{\"file\":\"rag_scifact.rst\",\"lines\":[31,41]}]",
+        "answer": "The SciFact tutorial configures the RAG pipeline with the following components and knobs:\n\n- Generator models: two OpenAI models, gpt\u20115\u2011mini and gpt\u20114o.  \n- Retrieval/search strategies: similarity search and maximum marginal relevance (MMR).  \n- Embeddings: OpenAI text\u2011embedding\u20113\u2011small.  \n- Vector store: FAISS with CPU\u2011based exact search (no ANN approximation).  \n- Chunking: 512\u2011token chunks with a 32\u2011token overlap, using recursive character splitting with tiktoken encoding.  \n- Initial retrieval: top\u201115 documents are retrieved.  \n- Reranking: cross\u2011encoder/ms\u2011marco\u2011MiniLM\u2011L6\u2011v2 applied to the retrieved set, selecting the top\u20115 final documents.  \n- Document template: a custom template that includes document titles together with their content.  \n\nAll other configuration knobs are fixed, resulting in a total of four configurations (2 generator models\u202f\u00d7\u202f2 search strategies).",
         "sources": [
             {
                 "file": "rag_scifact.rst",
@@ -867,8 +671,8 @@
             {
                 "file": "rag_scifact.rst",
                 "lines": [
-                    1,
-                    34
+                    31,
+                    41
                 ]
             }
         ],
@@ -876,15 +680,8 @@
     },
     {
         "question_id": 36,
-        "answer": "The GSM8K tutorial builds its few\u2011shot prompting pipeline by selecting examples semantically with sentence\u2011transformers/all\u2011MiniLM\u2011L6\u2011v2 embeddings, drawing from a fixed pool of ten hand\u2011crafted examples, and varying the number of few\u2011shot examples (k) with two values \u2013 three or five examples per prompt. The prompt template follows a chain\u2011of\u2011thought style that includes step\u2011by\u2011step reasoning and places the final answer after \u201c####\u201d. All other knobs are held constant. The pipeline compares two generator models (gpt\u20115\u2011mini and gpt\u20114o); only the first model (gpt\u20115\u2011mini) uses two reasoning\u2011effort levels (medium and high). Combining the model choices, the reasoning effort levels (only for gpt\u20115\u2011mini), and the two k values produces a total of six distinct configuration combinations (computed as 1\u202f\u00d7\u202f1\u202f\u00d7\u202f2\u202f+\u202f1\u202f\u00d7\u202f2\u202f\u00d7\u202f2\u202f=\u202f6).",
+        "answer": "The GSM8K tutorial configures its few\u2011shot prompting pipeline to use semantic similarity\u2011based example selection (via the sentence\u2011transformers/all\u2011MiniLM\u2011L6\u2011v2 model) from a pool of 10 hand\u2011crafted examples. It varies the number of examples (k) per prompt with two values,\u202f3 and\u202f5, and employs a chain\u2011of\u2011thought prompt template that includes system instructions, the selected few\u2011shot examples, and the target question. The pipeline runs two OpenAI generator models \u2013\u202fgpt\u20115\u2011mini and\u202fgpt\u20114o \u2013 with gpt\u20115\u2011mini tested at two reasoning\u2011effort levels (medium and high) while gpt\u20114o uses a single level. All other knobs are fixed, resulting in a total of 6 distinct configuration combinations (1\u202f\u00d7\u202f1\u202f\u00d7\u202f2\u202f+\u202f1\u202f\u00d7\u202f2\u202f\u00d7\u202f2\u202f=\u202f6).",
         "sources": [
-            {
-                "file": "rag_gsm8k.rst",
-                "lines": [
-                    1,
-                    35
-                ]
-            },
             {
                 "file": "rag_gsm8k.rst",
                 "lines": [
@@ -904,15 +701,8 @@
     },
     {
         "question_id": 37,
-        "answer": "RapidFire AI is an AI experiment execution framework that turns slow, sequential LLM pipeline customization into rapid, intelligent workflows with hyper\u2011parallel execution, real\u2011time experiment control, and automatic backend optimization. It uniquely provides live three\u2011way communication linking the IDE where an experiment is launched, a metrics display/control dashboard, and a multi\u2011core/multi\u2011GPU execution backend.",
+        "answer": "RapidFire AI is a new AI experiment execution framework that turns slow, sequential LLM\u2011pipeline customization into rapid, intelligent workflows with hyper\u2011parallel execution, dynamic real\u2011time experiment control, and automatic backend optimization. It is the first system to provide live three\u2011way communication between the IDE where an experiment is launched, a metrics display/control dashboard, and a multi\u2011core/multi\u2011GPU execution backend.",
         "sources": [
-            {
-                "file": "overview.rst",
-                "lines": [
-                    1,
-                    27
-                ]
-            },
             {
                 "file": "overview.rst",
                 "lines": [
@@ -925,15 +715,8 @@
     },
     {
         "question_id": 38,
-        "answer": "The three tutorials are FiQA RAG Q&A chatbot, which shows an all\u2011local (self\u2011hosted) model workflow; SciFact RAG for scientific claim verification, which shows an all\u2011OpenAI workflow; and GSM8K few\u2011shot/context engineering for math reasoning, which shows a hybrid workflow.",
+        "answer": "The three tutorials are FiQA RAG Q&A chatbot, which demonstrates an all\u2011local (self\u2011hosted) model workflow; SciFact RAG for scientific claim verification, which demonstrates an all\u2011OpenAI workflow; and GSM8K few\u2011shot/context engineering for math reasoning, which demonstrates a hybrid workflow.",
         "sources": [
-            {
-                "file": "tutorials.rst",
-                "lines": [
-                    1,
-                    43
-                ]
-            },
             {
                 "file": "tutorials.rst",
                 "lines": [
@@ -953,13 +736,13 @@
     },
     {
         "question_id": 39,
-        "answer": "",
+        "answer": "To set up RapidFire AI for fine\u2011tuning (SFT/RFT) and to be able to load gated Hugging\u202fFace models you follow these steps:\n\n1. **Create a Python\u202f3.12 virtual environment**  \n   ```bash\n   python3 --version          # must show 3.12.x\n   python3 -m venv .venv\n   source .venv/bin/activate\n   ```  \n\n2. **Install the RapidFire AI package**  \n   ```bash\n   pip install rapidfireai\n   rapidfireai --version      # should print something like \u201cRapidFire AI 0..14.0\u201d\n   ```  \n   (These commands are shown in the \u201cInstall dependencies and package\u201d section of the fine\u2011tuning walkthrough.)  \n\n3. **Install the Hugging\u202fFace CLI and log in** \u2013 this is required to access any gated model on the Hub.  \n   ```bash\n   pip install \"huggingface-hub[cli]\"\n   # Replace YOUR_TOKEN with your personal HF token (see https://huggingface.co/docs/hub/en/security-tokens)\n   hf auth login --token YOUR_TOKEN\n   ```  \n   After logging in, remove the problematic `hf-xet` package (work\u2011around for a known issue):  \n   ```bash\n   pip uninstall -y hf-xet\n   ```  \n\n4. **Initialize RapidFire AI for fine\u2011tuning** \u2013 this installs the specific dependencies needed for SFT/RFT and registers the environment. Run the command **once** per new venv or when you change GPU configuration.  \n   ```bash\n   rapidfireai init\n   ```  \n\n5. **Start the RapidFire AI services** \u2013 this launches the API server and the ML\u2011metrics dashboard front\u2011end.  \n   ```bash\n   rapidfireai start\n   ```  \n   The output should include a line like \u201cRapidFire Frontend is ready\u201d.\n\n6. **(Optional) Verify Hugging\u202fFace login** \u2013 if you encounter permission errors, ensure you run the login from the same virtual environment and that the notebook/kernel is using this venv. You can check with:  \n   ```bash\n   huggingface-cli whoami\n   ```  \n\nAfter completing these steps you have a fully initialized RapidFire AI installation ready for fine\u2011tuning, and you can reference any gated Hugging\u202fFace model (e.g., Llama models) using the authenticated token.",
         "sources": [
             {
-                "file": "walkthroughrag.rst",
+                "file": "walkthroughft.rst",
                 "lines": [
-                    33,
-                    75
+                    1,
+                    47
                 ]
             },
             {
@@ -968,28 +751,14 @@
                     63,
                     103
                 ]
-            },
-            {
-                "file": "walkthroughft.rst",
-                "lines": [
-                    1,
-                    47
-                ]
             }
         ],
         "retrieved_context": "Step 1: Install dependencies and package\n-----------------------\n\nObtain the RapidFire AI OSS package from pypi (includes all dependencies) and ensure it is installed correctly.\n\n.. important::\n\n  Requires Python 3.12+. Ensure that ``python3`` resolves to Python 3.12 before creating the venv.\n\n.. code-block:: bash\n\n   python3 --version  # must be 3.12.x\n   python3 -m venv .venv\n   source .venv/bin/activate\n\n   pip install rapidfireai\n\n   rapidfireai --version\n   # Verify it prints the following:\n   # RapidFire AI 0..14.0\n\n   # Due to current issue: https://github.com/huggingface/xet-core/issues/527\n   pip uninstall -y hf-xet\n\n\nThe tutorial notebooks for RAG evals do not use any gated models from Hugging Face.\nIf you want to access gated models, provide your Hugging Face account token.\nFor more details on that, :doc:`see Step 1 here</walkthroughft>`.\n\n\nStep 2: Initialize and start RapidFire AI server\n------------\n\nRun the following commands to initialize rapidfireai to use the correct dependencies for RAG evals:\n\n.. code-block:: bash\n\n   rapidfireai init --evals\n   # It will install specific dependencies and initialize rapidfireai for RAG evals\n\n\n.. note::\n  You need to run init **only once** for a new venv or when switching GPU(s) on your machine. You do NOT need to run it after a reboot or for a new terminal tab.\n\nHeadsup: the approval for the Llama models may take a few hours. Then provide your HF token in the same venv.\n\n.. code-block:: bash\n\n   source .venv/bin/activate\n   pip install \"huggingface-hub[cli]\"\n\n   # Replace YOUR_TOKEN with your actual HF token\n   # https://huggingface.co/docs/hub/en/security-tokens\n   hf auth login --token YOUR_TOKEN\n\n   # Due to current issue: https://github.com/huggingface/xet-core/issues/527\n   pip uninstall -y hf-xet\n\n\nFeel free to ask us on Discord if you need any help with accessing gated Hugging Face models. Unfortunately, we are not allowed to provide a publicly visible token here for your use due to Hugging Face's policies.\n\n\nStep 2: Start RapidFire AI server\n------------\n\nRun the following command to initialize rapidfireai to use the correct dependencies:\n\n.. code-block:: bash\n\n   rapidfireai init\n   # It will install specific dependencies and initialize rapidfireai\n\n.. note::\n  You need to run init *only once* for a new venv or when switching GPU(s) on your machine. You do NOT need to run it after a reboot, start/stop of rapidfireai, or for a new terminal.\n\n\nNext start RapidFire AI services: the frontend with the ML metrics dashboard and the API server. \nThe frontend URL shown below can be opened on your local browser.\n\n.. code-block:: bash\n\n   rapidfireai start\n   # It should print about 50 lines, including the following:\n   # ...\n   # RapidFire Frontend is ready\n\nInstall and Get Started: Fine-Tuning and Post-Training\n===============================\n\nThere are two ways to get started with RapidFire AI for SFT/RFT:\n\n1. **Google Colab** - Zero local setup, takes under 3 minutes to get started. However, this option has limitations due to the free T4 GPU instance, viz., it works only for smaller models and small datasets.\n\n2. **Full Installation** - Complete setup with full functionality for any environment (local machine or cloud machine), supporting models and datasets of any size.\n\nChoose the option that best fits your needs below.\n\n\nGoogle Colab\n-----------------------\n\nTry RapidFire AI instantly in your browser with our pre-configured Google Colab notebook. No installation required.\n\n**Launch the notebook:** `RapidFire AI on Google Colab <https://tinyurl.com/rapidfireai-colab>`_\n\n.. note::\n  The Google Colab environment is limited to small models and datasets due to their free resource constraints.\n\n\nFull Installation\n-----------------------\n\nFollow these steps to install RapidFire AI on your local machine or remote/cloud instance for complete functionality without limitations.\n\n\nStep 1: Install dependencies and package\n-----------------------\n\nObtain the RapidFire AI OSS package from pypi (includes all dependencies) and ensure it is installed correctly.\n\n.. important::\n\n  Requires Python 3.12+. Ensure that ``python3`` resolves to Python 3.12 before creating the venv.\n\n.. code-block:: bash\n\n   python3 --version  # must be 3.12.x\n   python3 -m venv .venv\n   source .venv/bin/activate\n\n   pip install rapidfireai\n\n   rapidfireai --version\n\nOverview of RapidFire AI Package\n==============\n\nRapidFire AI is a new AI experiment execution framework that transforms your LLM pipeline customization \nfrom slow, sequential processes into rapid, intelligent workflows with hyperparallelized execution, \ndynamic real-time experiment control, and automatic backend optimization.\n\nFor *RAG and context engineering evals*, start here: :doc:`Install and Get Started: RAG and Context Engineering</walkthroughrag>`.\n\nFor *SFT and RFT/post-training workflows*, start here: :doc:`Install and Get Started: SFT/RFT</walkthroughft>`.\n\n\nRapidFire AI is the first system of its kind to establish live three-way communication between the IDE\nwhere the experiment is launched, a metrics display/control dashboard, and a multi-core/multi-GPU execution backend.\n\n.. image:: /images/rf-usage.png\n   :width: 800px\n\nJust pip install the :code:`rapidfireai` OSS package. It works on a CPU-only machine, a single-GPU machine, \nor a multi-GPU machine. Note that for RAG/context engineering with only closed model APIs, GPUs are not needed. \n\nLaunch the server from the command line. Then import it as any other python package in your notebook/script. \nUse our API to define and launch the configs to compare in one go. \n\nMetrics plots are automatically visualized in the ML metrics dashboard (for SFT/RFT only for now) or shown in an \nin-notebook take (for RAG/context eng. only for now). \nThe Interactive Control (IC) ops panel lets you dynamically control runs in flight: stop, resume, clone, and modify them as you wish.\n\nExample Use Case Tutorials\n==================\n\nThese end-to-end examples serve as tutorials for the usage of RapidFire AI's API.\nThey use publicly available datasets, models, and code.\n\n\nFor RAG and Context Engineering\n------\n\nWe have one use case example each for an all-local model, all-OpenAI, and a hybrid workflow: \nFiQA RAG Q&A chatbot, SciFact RAG for scientific claim verification, and \nGSM8K few-shot/context engineering for math reasoning, respectively.\nThis set will expand over time to more examples based on community inputs.\n\nYou can also check out `RapidFire AI RAG on Google Colab <https://tinyurl.com/rapidfireai-rag-colab>`_ instead of your own machine; \nit showcases a simplified FiQA RAG Q&A chatbot use case.\n\n\n.. toctree::\n\n   rag_fiqa\n   rag_gsm8k\n   rag_scifact\n\n\nFor Fine-Tuning and Post-Training\n------\n\nWe have one use case example for each supported control flow from HuggingFace TRL: \nSFT, DPO, and GRPO. \nThis set will expand over time to more examples based on community inputs. \nThe SFT use case has multiple additional variations showcased, including a \"lite\" version \nwith a fast SLM and multiple FSDP-based versions with larger models that are auto-partitioned across GPUs.\n\nYou can also check out `RapidFire AI on Google Colab <https://tinyurl.com/rapidfireai-colab>`_ instead of your own machine; \nit showcases a simplified SFT use case.\n\n.. toctree::\n\n   sft\n   dpo\n   grpo"
     },
     {
         "question_id": 40,
-        "answer": "The postprocess_fn is an optional user\u2011provided function that takes a batch dictionary (which includes the generated outputs under the key \u201cgenerated_text\u201d) and returns a modified batch dictionary with any new or altered fields. It is used to apply transformations such as extracting structured information from the generations or adding ground\u2011truth data before metrics are computed. In the run_evals pipeline it is called for each batch **after the generation step and before the metric\u2011computation step**.",
+        "answer": "The `postprocess_fn` is an optional, user\u2011provided function that receives a batch of examples (including the generated texts under the key `\"generated_text\"`). It can transform the batch\u2014such as extracting structured information from the generations, adding ground\u2011truth data, or otherwise modifying or adding keys\u2014so that the batch is in the desired form before metrics are calculated. In the `run_evals` pipeline it is called for each batch **after the model has generated its outputs and before the metric computation step**.",
         "sources": [
-            {
-                "file": "evalsfunctions.rst",
-                "lines": [
-                    74,
-                    79
-                ]
-            },
             {
                 "file": "evalsfunctions.rst",
                 "lines": [
@@ -1002,7 +771,7 @@
     },
     {
         "question_id": 41,
-        "answer": "RapidFire AI says that simply downsampling the evaluation set fails for several reasons. With downsampling you must pick a sample size before you run the eval, which is hard when the metrics vary a lot across examples; a fixed sample can give point estimates that lack confidence intervals and can therefore give a false sense of certainty. To improve accuracy you would have to repeatedly create new samples and juggle separate files, adding manual grunt work. Moreover, downsampling does not give you the interactive experiment control that RapidFire AI\u2019s online aggregation provides\u2014there is no built\u2011in ability to stop poor configurations early, clone better ones on the fly, or run many configs in parallel with IC Ops; you would have to re\u2011implement those capabilities yourself. Online aggregation avoids all of these issues by processing data shard\u2011by\u2011shard, delivering real\u2011time metric estimates with confidence intervals and dynamic control, while still being compatible with downsampling if desired. \n#### SOURCE: [{\"file\":\"onlineagg.rst\",\"lines\":[223,253]}]",
+        "answer": "",
         "sources": [
             {
                 "file": "onlineagg.rst",
@@ -1014,8 +783,8 @@
             {
                 "file": "onlineagg.rst",
                 "lines": [
-                    223,
-                    253
+                    1,
+                    32
                 ]
             }
         ],
@@ -1023,7 +792,7 @@
     },
     {
         "question_id": 42,
-        "answer": "The SFT FSDP tutorial has three GPU configurations based on model size:  \n- **FSDP Lite** (base model TinyLlama\u20111.1B\u2011Chat\u2011v1.0) requires at least\u202f2\u202f\u00d7\u202fA10 GPUs (or equivalent), giving roughly\u202f48\u202fGB total HBM.  \n- **FSDP Regular** (base model Qwen3\u201132B) requires at least\u202f4\u202f\u00d7\u202fA10 GPUs (or equivalent), giving roughly\u202f96\u202fGB total HBM.  \n- **FSDP Large** (base model Llama\u20113\u201170B\u2011Instruct) requires at least\u202f8\u202f\u00d7\u202fA10 GPUs (or equivalent), giving roughly\u202f192\u202fGB total HBM.  \n\nThe documentation notes that while these notebooks can run on inexpensive A10 GPUs, using at least A100\u2011class GPUs or newer with NVLink is strongly recommended for reasonable runtimes.",
+        "answer": "The SFT FSDP tutorial defines three GPU configurations based on model size. The Lite notebook, which uses TinyLlama\u20111.1B\u2011Chat\u2011v1.0, requires at least 2\u202f\u00d7\u202fA10 GPUs (or equivalent) providing a total of about 48\u202fGB of HBM. The Regular notebook, which fine\u2011tunes Qwen3\u201132B, needs at least 4\u202f\u00d7\u202fA10 GPUs (or equivalent) for a total of roughly 96\u202fGB of HBM. The Large notebook, which works with Llama\u20113\u201170B\u2011Instruct, requires at least 8\u202f\u00d7\u202fA10 GPUs (or equivalent) to supply around 192\u202fGB of total HBM. While the notebooks can run on inexpensive A10 GPUs, the documentation recommends using A100 or later GPUs with NVLink for reasonable runtimes.",
         "sources": [
             {
                 "file": "sft.rst",
@@ -1038,28 +807,14 @@
                     25,
                     49
                 ]
-            },
-            {
-                "file": "sft.rst",
-                "lines": [
-                    51,
-                    56
-                ]
             }
         ],
         "retrieved_context": "* FSDP Regular with base model Qwen3-32B. Needs at least 4x A10 GPUs or equivalent (96 GB total HBM) to work. `View on GitHub <https://github.com/RapidFireAI/rapidfireai/blob/main/tutorial_notebooks/fine-tuning/rf-tutorial-sft-chatqa.ipynb>`__\n\n* FSDP Large with base model Llama-3-70B-Instruct. Needs at least 8x A10 GPUs or equivalent (192 GB total HBM) to work. `View on GitHub <https://github.com/RapidFireAI/rapidfireai/blob/main/tutorial_notebooks/fine-tuning/rf-tutorial-sft-chatqa-fsdp-large.ipynb>`__\n\n.. important::\n  Although the above FSDP tutorial notebooks can work on cheap A10 GPUs, we highly recommend using at least A100s or later GPUs with NVLink support for reasonable runtimes.\n\nThe prompt format includes a system message defining the assistant as \"helpful and friendly customer \nsupport\" with user instructions and assistant responses\n\n\nModel, Adapter, and Trainer Knobs\n-------\n\nWe compare 2 base model architectures: Llama-3.1-8B-Instruct and Mistral-7B-Instruct-v0.3. \nThe lite version uses only one: TinyLlama-1.1B-Chat-v1.0.\n\nThere are 2 different LoRA adapter configurations: a low-capacity adapter (rank 16; 8 for lite) targeting \nonly 2 modules and a high-capacity adapter (rank 128; 32 for lite) targeting 4 modules.\n\nAll other knobs are fixed across all configs. Thus, there are a total of 4 combinations, \nall launched with a simple grid search.\n\n\nMulti-GPU Model Partitioning with FSDP\n-------\n\nRapidFire AI supports automated large model partitioning across GPUs (on the same machine) via PyTorch's native FSDP. \nProvide the relevant FSDP deatils in a config knob, optionally along with the number of GPUs to use for that run. \nThe following notebooks showcase the use of FSDP for SFT with the corresponding LLMs:\n\n* FSDP Lite with base model TinyLlama-1.1B-Chat-v1.0. Needs at least 2x A10 GPUs or equivalent (48 GB total HBM) to work. `View on GitHub <https://github.com/RapidFireAI/rapidfireai/blob/main/tutorial_notebooks/fine-tuning/rf-tutorial-sft-chatqa-fsdp-lite.ipynb>`__\n\nKnown Issues and Updates Coming Soon\n=============\n\nAs of this writing, RapidFire AI has the following known issues. We have listed some \nrecommended recourses for some. \nWe are actively working on resolving these and welcome feedback on their utility for your \nuse cases to help with prioritization.\n\n\nMulti-GPU Model Support\n------\n\nOrdinarily, any given run's model(s) for its batch size must fit on a single GPU's memory. \nFor DPO and GRPO, both the policy and reference models must fit on the GPU together. \n\nFor SFT (and DPO), RapidFire AI can use FSDP automatically to partition a large model across GPUs on the same machine.\nProvide the FSDP usage details in a config knob. See :doc:`the SFT page</sft>` FSDP section for more deatils. \nSupport for GRPO coming soon. \nWe also plan to add support for multi-GPU model partitioning via DeepSpeed soon.\n\n\nImportError in between Experiments\n------\n\nIf you run multiple experiments back to back from the same notebook/IDE session, you might \nsee the following error appear occasionally: \n\n.. code-block:: python\n\n   ImportError: cannot import name 'GenerationMixin' from 'transformers.generation'\n\nThis is caused by stray Python processes from the previous experiment not ending properly. \nIf you see this error, we recommend the following steps:\n\n* Run the command :code:`ps - ef | grep python`, look for \"multiprocessing.spawn\"/\"defunct\" processes, and kill if there are any with command :code:`kill -9 [PID]`.\n\n* Wait for about 2 minutes regardless of whether there are processes to kill as above.\n\nnum_train_epochs=2,\n\t\tlogging_steps=5,\n\t\teval_strategy=\"steps\",\n\t\teval_steps=25,\n\t\tfp16=True,\n\t\tsave_strategy=\"epoch\",\n\t)\n\n\t# Two knobs have list values here\n\tRFSFTConfig(\n\t\tlearning_rate=List([2e-4, 1e-5]),\n\t\tlr_scheduler_type=List([\"linear\", \"cosine\"]),\n\t\tper_device_train_batch_size=4,\n\t\tgradient_accumulation_steps=4,\n\t\tper_device_eval_batch_size=8,\n\t\tnum_train_epochs=2,\n\t\tlogging_steps=5,\n\t\teval_strategy=\"steps\",\n\t\teval_steps=25,\n\t\tfp16=True,\n\t\tsave_strategy=\"epoch\",\n\t)\n\n\nFor larger LLMs that do not fit on a single GPU and need cross-GPU model partitioning (within a machine) to fit in aggregate GPU memory, specify the FSDP configuration to apply with its usual settings given a dictionary as illustrated below.\n\n\n**Examples:**\n\n.. code-block:: python\n\n\t# From the SFT FSDP Large tutorial notebook\n\tRFSFTConfig(\n\t\t...\n\t\tfsdp=\"full_shard auto_wrap\",\n        fsdp_config={\n\t\t\t\"backward_prefetch\": \"backward_pre\",\n\t\t\t\"forward_prefetch\": False,\n\t\t\t\"use_orig_params\": False,\n\t\t\t\"cpu_ram_efficient_loading\": True,\n\t\t\t\"offload_params\": False,\n\t\t\t\"sync_module_states\": True,\n\t\t\t\"limit_all_gathers\": True,\n\t\t\t\"sharding_strategy\": \"FULL_SHARD\",\n\n:param num_gpus: Number of GPUs to use for each run/config produced from this :code:`RFModelConfig`. Can skip this and specify :code:`num_gpus` in :func:`run_fit()` if all runs must use same number of GPUs.\n  :type num_gpus: int, optional\n\n  .. seealso::\n     - :doc:`Hugging Face Transformers documentation <https://huggingface.co/docs/transformers/>`\n     - :doc:`Hugging Face PEFT library documentation <https://huggingface.co/docs/peft/>`\n     - :class:`RFSFTConfig`, :class:`RFDPOConfig`, :class:`RFGRPOConfig` for training argument configurations\n\n\n**Examples:**\n\n.. code-block:: python\n\n    # Based on the SFT tutorial notebook\n    RFModelConfig(\n        model_name=\"meta-llama/Llama-3.1-8B-Instruct\",\n        peft_config=rfloraconfig1,\n        training_args=rfsftconfig1,\n        model_type=\"causal_lm\",\n        model_kwargs={\"device_map\": \"auto\", \"torch_dtype\": \"auto\",\"use_cache\":False},\n        formatting_func=sample_formatting_function,\n        compute_metrics=sample_compute_metrics, \n        generation_config = {\n            \"max_new_tokens\": 256, \"temperature\": 0.6, \"top_p\": 0.9, \n            \"top_k\": 40, \"repetition_penalty\": 1.18,\n        }\n    )\n\n    # Based on the GRPO tutorial notebook\n    RFModelConfig(\n        model_name=\"Qwen/Qwen2.5-7B-Instruct\","
     },
     {
         "question_id": 43,
-        "answer": "The error is caused by leftover Python processes from the previous experiment. To fix it, run `ps -ef | grep python` to locate any \u201cmultiprocessing.spawn\u201d or \u201cdefunct\u201d Python processes that remain, terminate them with `kill -9 <PID>`, and then wait roughly two minutes before starting the next experiment. This clears the stray processes and allows the import to succeed.",
+        "answer": "The error is caused by stray Python processes left over from the previous experiment. To fix it, locate any lingering processes (especially those showing \u201cmultiprocessing.spawn\u201d or marked as defunct) by running\u202fps -ef\u202f|\u202fgrep python, terminate them with\u202fkill -9\u202f[PID], and then wait roughly two minutes before starting the next experiment.",
         "sources": [
-            {
-                "file": "issues.rst",
-                "lines": [
-                    1,
-                    37
-                ]
-            },
             {
                 "file": "issues.rst",
                 "lines": [
@@ -1087,28 +842,14 @@
                     154,
                     174
                 ]
-            },
-            {
-                "file": "models.rst",
-                "lines": [
-                    130,
-                    160
-                ]
             }
         ],
         "retrieved_context": "API: Generator Configs\n===============\n\nRapidFire AI supports both self-hosted open LLMs and closed model LLM APIs as the generator. \nAs of this writing, it wraps around the model config of vLLM for the former and the OpenAI API for the latter. \nWe plan to expand support for more generator plugins, including Gemini and Claude APIs, based on feedback. \n\n\nRFvLLMModelConfig\n------\n\nThis is a wrapper around vLLM's :class:`config` and :class:`SamplingParams` classes. \nThe full list of their arguments are available on `this page <https://docs.vllm.ai/en/latest/api/vllm/config/index.html>`__ \nand `this page <https://docs.vllm.ai/en/v0.6.4/dev/sampling_params.html>`__, respectively.\n\nThe difference here is that the individual arguments (knobs) can be :class:`List` valued or \n:class:`Range` valued in an :class:`RFvLLMModelConfig`. \nThat is how you can specify a base set of knob combinations from which a config group can \nbe produced. Also read :doc:`the Multi-Config Specification page</configs>`.\n\n.. py:class:: RFvLLMModelConfig\n\n  :param model_config: A dictionary with key-value pairs necessary for vLLM-based generation by a self-hosted LLM. All knobs given in this dictionary are simply passed to vLLM as is. vLLM will use its defaults for unspecified knobs. We recommend listing at least the following knobs.\n\n\"top_k\": 40, \"repetition_penalty\": 1.18,\n        }\n    )\n\n    # Based on the GRPO tutorial notebook\n    RFModelConfig(\n        model_name=\"Qwen/Qwen2.5-7B-Instruct\",\n        peft_config=rfloraconfig,\n        training_args=rfgrpoconfig1,\n        formatting_func=sample_formatting_function,\n        reward_funcs=reward_funcs,\n        model_kwargs={\"load_in_4bit\": True, \"device_map\": \"auto\", \"torch_dtype\": \"auto\", \"use_cache\": False},\n        tokenizer_kwargs={\"model_max_length\": 2048, \"padding_side\": \"left\", \"truncation\": True}\n    )\n\n**Notes:**\n\nNote that one :class:`RFModelConfig` object can have only one base model configuration and \none training control flow arguments dictionary. \nBut you can specify a :class:`List` of PEFT configs, formatting functions, eval metrics \nfunctions, and reward functions list as part of your multi-config specification.\n\n:param num_gpus: Number of GPUs to use for each run/config produced from this :code:`RFModelConfig`. Can skip this and specify :code:`num_gpus` in :func:`run_fit()` if all runs must use same number of GPUs.\n  :type num_gpus: int, optional\n\n  .. seealso::\n     - :doc:`Hugging Face Transformers documentation <https://huggingface.co/docs/transformers/>`\n     - :doc:`Hugging Face PEFT library documentation <https://huggingface.co/docs/peft/>`\n     - :class:`RFSFTConfig`, :class:`RFDPOConfig`, :class:`RFGRPOConfig` for training argument configurations\n\n\n**Examples:**\n\n.. code-block:: python\n\n    # Based on the SFT tutorial notebook\n    RFModelConfig(\n        model_name=\"meta-llama/Llama-3.1-8B-Instruct\",\n        peft_config=rfloraconfig1,\n        training_args=rfsftconfig1,\n        model_type=\"causal_lm\",\n        model_kwargs={\"device_map\": \"auto\", \"torch_dtype\": \"auto\",\"use_cache\":False},\n        formatting_func=sample_formatting_function,\n        compute_metrics=sample_compute_metrics, \n        generation_config = {\n            \"max_new_tokens\": 256, \"temperature\": 0.6, \"top_p\": 0.9, \n            \"top_k\": 40, \"repetition_penalty\": 1.18,\n        }\n    )\n\n    # Based on the GRPO tutorial notebook\n    RFModelConfig(\n        model_name=\"Qwen/Qwen2.5-7B-Instruct\",\n\n:param model_kwargs: Additional parameters for model initialization, passed to :code:`AutoModel.from_pretrained()` (e.g., :code:`torch_dtype`, :code:`device_map`, :code:`trust_remote_code`).\n  :type model_kwargs: Dict[str, Any], optional\n\n  :param ref_model_name: For DPO and GRPO only; akin to :code:`model_name` above but for the frozen reference model.\n  :type ref_model_name: str, optional\n\n  :param ref_model_type: For DPO and GRPO only; akin :code:`model_type` above but for the frozen reference model.\n  :type ref_model_type: str, optional\n\n  :param ref_model_kwargs: For DPO and GRPO only; akin :code:`model_kwargs` above but for the frozen reference model.\n  :type ref_model_kwargs: Dict[str, Any], optional\n\n  :param reward_funcs: Reward functions for evaluating generated outputs during training (mainly for GRPO but can be used for DPO too). Can be a :class:`List` for multi-config.\n  :type reward_funcs: Callable | [Callable] | :class:`List` of Callable | :class:`List` of [Callable], optional\n\n  :param generation_config: Arguments for text generation passed to :code:`model.generate()` (e.g., :code:`max_new_tokens`, :code:`temperature`, :code:`top_p`).\n  :type generation_config: Dict[str, Any], optional\n\n  :param num_gpus: Number of GPUs to use for each run/config produced from this :code:`RFModelConfig`. Can skip this and specify :code:`num_gpus` in :func:`run_fit()` if all runs must use same number of GPUs.\n\nGlossary of Key Terms and Concepts\n==========\n\n\nArtifacts\n-----\nAll files related to an experiment saved under in a local folder with its path specified by\n:code:`experiments_path` in the experiment's constructor.\nIncludes the final (and possibly all epoch-level) model checkpoints of all runs across \nall :func:`run_fit()` in that experiment, and all associated metrics files.\n\nRead more here: :doc:`API: Experiment</experiment>`.\n\n\nConfig Dictionary\n-----\n\nA dictionary of key-value pairs that specify a full model training configuration. \nA knob's value can be a singleton or set-valued (:class:`List` or :class:`Range`). \nA dictionary with set-valued knobs be fed to a config-group generator method. \nA single combination of knob values in this dictionary is called a \"leaf\" config. \nRapidFire AI instantiates one run per leaf config, and its values are injected via the \n:code:`model_config` argument to your :func:`create_model_fn()` function.\n\nRead more here: :doc:`API: Multi-Config Specification</configs>`.\n\n\nConfig Group\n-----\n\nA set of config dictionary instances, produced in bulk by providing a config dictionary \nwith set-valued knobs to a config-group generator method (see below). \nIt can also be a Python list of individual config dictionaries or config-group generators recursively.\n\nRead more here: :doc:`API: Multi-Config Specification</configs>`.\n\n\nConfig Group Generator\n-----\n\nA method to generate a group of config dictionaries in one go based on an input\nconfig dictionary with set-valued knobs (:class:`List` or :class:`Range`)."
     },
     {
         "question_id": 45,
-        "answer": "Distributive metrics are purely additive: the metric value can be obtained by simply summing a quantity over all data points (for example, a count of correct predictions or the total token length). Algebraic metrics are averages or proportions: they are derived by dividing one additive quantity by another (such as precision or mean rouge\u20111) and therefore are composed of components that are themselves distributive.\n\n#### SOURCE: [{\"file\": \"onlineagg.rst\", \"lines\": [54, 93]}]",
+        "answer": "Distributive metrics are purely additive over a set of data points \u2013 they can be summed directly (for example the count of correct predictions or the sum of output token lengths).  \n\nAlgebraic metrics are averages or proportions over a set of data points. They are computed by first aggregating separate distributive components (such as a count of correct predictions and a total count) and then combining them, typically by division (for example precision, which divides the number of correct predictions by the total number of predictions, or mean rouge\u20111, which averages per\u2011example rouge\u20111 scores).  \n\n#### SOURCE: [{\"file\":\"onlineagg.rst\",\"lines\":[54,93]}]",
         "sources": [
-            {
-                "file": "onlineagg.rst",
-                "lines": [
-                    54,
-                    93
-                ]
-            },
             {
                 "file": "onlineagg.rst",
                 "lines": [
