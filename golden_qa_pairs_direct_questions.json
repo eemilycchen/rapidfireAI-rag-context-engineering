@@ -1,0 +1,660 @@
+[
+  {
+    "question_id": 1,
+    "question": "What two things are needed to create a multi-config specification in RapidFire AI?",
+    "reference_answer": "To create a multi-config specification, you need knob set generators for the knob values and config group generators that take a config with set-valued knobs and generate groups of full configs. RapidFire AI currently supports List() for discrete values and Range() for sampling from continuous intervals, and it supports RFGridSearch() and RFRandomSearch() as the two common config group generators.",
+    "source_evidence": [
+      {
+        "file": "configs.rst",
+        "lines": [
+          19,
+          24
+        ]
+      },
+      {
+        "file": "configs.rst",
+        "lines": [
+          55,
+          59
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 2,
+    "question": "What kinds of knobs can RapidFire AI vary beyond ordinary hyperparameters?",
+    "reference_answer": "RapidFire AI generalizes multi-config experimentation beyond ordinary hyperparameters. It can vary base model architectures, prompt schemes, LoRA adapters, optimizers for training, and RAG/context-engineering knobs such as data chunking, embedding, retrieval, reranking, generation, and prompt schemes, as well as other user-defined knobs.",
+    "source_evidence": [
+      {
+        "file": "configs.rst",
+        "lines": [
+          4,
+          13
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 3,
+    "question": "How do RFGridSearch and RFRandomSearch differ in how they handle List() and Range() knobs?",
+    "reference_answer": "RFGridSearch allows each knob to be either a singleton or a List(), but no knob should be a Range() or it will error. RFRandomSearch allows a knob to be a singleton, List(), or Range(). Random search samples IID combinations by uniformly picking from each discrete or continuous set until it accumulates num_runs distinct combinations.",
+    "source_evidence": [
+      {
+        "file": "configs.rst",
+        "lines": [
+          90,
+          102
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 4,
+    "question": "How does the adaptive execution engine change the way multi-config experiments are run compared with sequential execution?",
+    "reference_answer": "Instead of running one configuration through the whole dataset before starting another, RapidFire AI randomly shards the training or evaluation dataset into chunks and schedules all runs one shard at a time. This creates an interruptible, more concurrent learning process in which adapters and, if needed, base models are swapped across GPUs/CPUs and DRAM using efficient shared-memory caching. The system can show learning behavior for all configs early, while swapping overhead is measured as less than 5% of runtime.",
+    "source_evidence": [
+      {
+        "file": "difference.rst",
+        "lines": [
+          4,
+          29
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 5,
+    "question": "Why can RapidFire AI be more cost-effective than waiting for full batch evals when monitoring token spend for RAG evaluation?",
+    "reference_answer": "Traditional batch evals make you wait for an entire dataset to be processed by a config before seeing results, which can waste token spend or GPU resources on poor configs. RapidFire AI uses online aggregation with sharded processing so you get running metric estimates and confidence intervals in real time. That lets you stop bad configs, clone promising ones, and redirect token spend toward more productive RAG configurations.",
+    "source_evidence": [
+      {
+        "file": "onlineagg.rst",
+        "lines": [
+          4,
+          20
+        ]
+      },
+      {
+        "file": "onlineagg.rst",
+        "lines": [
+          223,
+          224
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 6,
+    "question": "What are distributive and algebraic metrics in RapidFire AI online aggregation?",
+    "reference_answer": "Distributive metrics are purely additive over data points, such as a count of correct predictions or a sum of output token lengths. Algebraic metrics are averages or proportions that can be decomposed into distributive components, such as precision or mean ROUGE-1. When defining eval metrics, you must specify the metric type and value range to receive projected estimates and confidence intervals; otherwise metrics are displayed as-is without projected intervals.",
+    "source_evidence": [
+      {
+        "file": "onlineagg.rst",
+        "lines": [
+          58,
+          74
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 7,
+    "question": "What confidence interval strategies does RapidFire AI support, and when is each appropriate?",
+    "reference_answer": "RapidFire AI supports Normal Approximation, Wilson Score, and Hoeffding Bounds. Normal Approximation is the default and is suitable for most cases with non-trivial sample sizes such as n > 30. Wilson Score is better for small samples or metrics near 0/1 boundaries. Hoeffding Bounds are safest because they make no distributional assumptions and provide guaranteed coverage, but their intervals are typically loose.",
+    "source_evidence": [
+      {
+        "file": "onlineagg.rst",
+        "lines": [
+          93,
+          100
+        ]
+      },
+      {
+        "file": "onlineagg.rst",
+        "lines": [
+          140,
+          188
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 8,
+    "question": "What four Interactive Control operations are available, and when are they executed?",
+    "reference_answer": "RapidFire AI supports four IC Ops: Stop, Resume, Clone-Modify, and Delete. These operations are queued by the system and executed at a chunk boundary for the run, avoiding nondeterministic or inconsistent behavior during concurrent run execution. Stop parks a run after its current chunk, Resume restarts a stopped run from the next chunk, Clone-Modify creates edited clones of a parent run, and Delete removes a run from future chunks and plots.",
+    "source_evidence": [
+      {
+        "file": "icops.rst",
+        "lines": [
+          75,
+          87
+        ]
+      },
+      {
+        "file": "icops.rst",
+        "lines": [
+          95,
+          175
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 9,
+    "question": "What does Clone-Modify let users edit, and what constraint applies when warm-starting a clone?",
+    "reference_answer": "Clone-Modify lets you add clones of a parent run and edit knobs such as learning rate, LoRA rank, or even the base model using the editable config dictionary shown in the IC Ops panel. You can warm-start a clone from the parent's weights, but warm-starting is only allowed if the clone has identical neural architecture as the parent, including the LoRA adapters; otherwise it will error.",
+    "source_evidence": [
+      {
+        "file": "icops.rst",
+        "lines": [
+          123,
+          140
+        ]
+      },
+      {
+        "file": "icops.rst",
+        "lines": [
+          154,
+          164
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 10,
+    "question": "What tabs are on the main Experiments page, and what do the two log tabs show?",
+    "reference_answer": "The main Experiments page has four tabs: Table, Chart, Experiment Log, and Interactive Control (IC) Log. The Experiment Log continually displays operations run with RapidFire AI's API, while the IC Log specifically displays the Interactive Control operations performed through the IC Ops panels. The full experiment log is also saved locally as rapidfire.log.",
+    "source_evidence": [
+      {
+        "file": "dashboard.rst",
+        "lines": [
+          34,
+          45
+        ]
+      },
+      {
+        "file": "dashboard.rst",
+        "lines": [
+          89,
+          105
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 11,
+    "question": "What dashboards can RapidFire AI log metrics to, and how can they be enabled?",
+    "reference_answer": "RapidFire AI's default browser-based dashboard is a fork of MLflow, and it also supports TensorBoard and Trackio for metrics plots. You can enable one, two, or all three by starting the server with rapidfireai start --tracking-backends [mlflow | tensorboard | trackio], or by setting RF_MLFLOW_ENABLED, RF_TENSORBOARD_ENABLED, and RF_TRACKIO_ENABLED to 'true' in Python. Weights & Biases and CometML support is planned.",
+    "source_evidence": [
+      {
+        "file": "dashboard.rst",
+        "lines": [
+          5,
+          31
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 12,
+    "question": "What parameters does the Experiment constructor take, and what happens if an experiment name is reused?",
+    "reference_answer": "The Experiment constructor takes experiment_name, mode, and experiments_path. The experiment_name is a unique user-given name used for dashboard plots and artifact tracking. The mode is either 'fit' or 'eval' and defaults to 'fit'. The experiments_path stores experiment artifacts and defaults to './rapidfire_experiments'. If you accidentally reuse a previous experiment name, RapidFire AI appends a suffix similar to filesystem behavior.",
+    "source_evidence": [
+      {
+        "file": "experiment.rst",
+        "lines": [
+          7,
+          14
+        ]
+      },
+      {
+        "file": "experiment.rst",
+        "lines": [
+          22,
+          39
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 13,
+    "question": "What arguments does run_evals accept, and what does it return?",
+    "reference_answer": "run_evals launches LLM evaluation, optionally with RAG, for a config group. It accepts config_group, dataset, num_shards, num_actors, and seed. It returns a dictionary keyed by run/config ID, where each value is a 2-tuple containing a dictionary of aggregated metrics and a dictionary of cumulative metrics.",
+    "source_evidence": [
+      {
+        "file": "experiment.rst",
+        "lines": [
+          133,
+          158
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 14,
+    "question": "What columns are returned by get_runs_info(), and what is this function useful for?",
+    "reference_answer": "get_runs_info() returns a DataFrame with run_id, status, mlflow_run_id, completed_steps, total_steps, start_chunk_id, num_chunks_visited_curr_epoch, num_epochs_completed, error, source, ended_by, warm_started_from, and config. It is useful for programmatic post-processing or pre-processing of runs and their config knobs, such as launching new runs based on previous results.",
+    "source_evidence": [
+      {
+        "file": "experiment.rst",
+        "lines": [
+          210,
+          241
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 15,
+    "question": "What does num_shards in run_evals control, and why does RapidFire AI recommend at least 4?",
+    "reference_answer": "num_shards is the number of logical splits of the evaluation dataset used to control concurrency for multi-config execution. It is identical in purpose to num_chunks for run_fit: it balances the desired cross-config concurrency against minor swapping overhead. RapidFire AI recommends at least 4 so results for all runs are updated after each quarter of the data.",
+    "source_evidence": [
+      {
+        "file": "experiment.rst",
+        "lines": [
+          148,
+          155
+        ]
+      },
+      {
+        "file": "experiment.rst",
+        "lines": [
+          186,
+          189
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 16,
+    "question": "What does get_results() return from a RapidFire AI experiment?",
+    "reference_answer": "get_results() returns a DataFrame containing all metrics, including loss, eval loss, and any defined eval metrics, for all steps and all runs across all run_fit invocations in the current experiment. The DataFrame includes run ID, step number, loss, and one column per metric plot displayed on the dashboard.",
+    "source_evidence": [
+      {
+        "file": "experiment.rst",
+        "lines": [
+          244,
+          253
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 17,
+    "question": "What stages does RFLangChainRagSpec cover?",
+    "reference_answer": "RFLangChainRagSpec is RapidFire AI's wrapper around LangChain APIs for the RAG stages before generation. It specifies data loading, chunking, embedding, indexing, retrieval, and reranking steps, although many of these stages are optional.",
+    "source_evidence": [
+      {
+        "file": "ragspecs.rst",
+        "lines": [
+          4,
+          10
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 18,
+    "question": "How does RFLangChainRagSpec differ between preprocessing and no-preprocessing workflows?",
+    "reference_answer": "With preprocessing, RFLangChainRagSpec creates both document preprocessing workers and query processing workers; you provide a document_loader, optional text_splitter, embedding_cfg, and optional vector_store_cfg. The documents are loaded, optionally chunked, embedded, and stored in a vector store, defaulting to FAISS if no vector store config is provided. Without preprocessing, it creates only query processing workers over an optional preprocessed vector store; you provide the embedding config needed for queries, optionally a retriever and/or vector_store_cfg, optional search_cfg, and optional reranker_cfg.",
+    "source_evidence": [
+      {
+        "file": "ragspecs.rst",
+        "lines": [
+          21,
+          38
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 19,
+    "question": "What search algorithms and knobs can be configured in search_cfg?",
+    "reference_answer": "search_cfg must include a type value for one of three retrieval algorithms: 'similarity' for standard cosine similarity search, 'similarity_score_threshold' for similarity search with a minimum score threshold, or 'mmr' for Maximum Marginal Relevance search for diversity. Supported knobs include k for number of documents, filter for optional filtering, score_threshold for SST, and fetch_k and lambda_mult for MMR.",
+    "source_evidence": [
+      {
+        "file": "ragspecs.rst",
+        "lines": [
+          103,
+          116
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 20,
+    "question": "What vector store types and modes does RapidFire AI support?",
+    "reference_answer": "RapidFire AI supports FAISS, Pinecone, and Postgres PGVector as vector store types. Vector stores operate in Create mode when documents are provided and no pre-existing index or collection is specified, Read mode when no document_loader is provided and a pre-existing index or collection is specified, and Update mode when both new documents and a pre-existing index or collection are provided. FAISS is in-memory, uses a flat L2 index by default, and only supports Create mode because it is not persistent.",
+    "source_evidence": [
+      {
+        "file": "ragspecs.rst",
+        "lines": [
+          56,
+          70
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 21,
+    "question": "What keys are required or optional for Pinecone vector_store_cfg in Create, Read, and Update modes?",
+    "reference_answer": "For Pinecone, pinecone_api_key is needed either in the config or via the PINECONE_API_KEY environment variable, and embedding_cfg is required either in the Pinecone config or top-level config. text_key is optional and defaults to 'text'. In Create mode, spec is required, while metric, vector_type, tags, timeout, and deletion_protection are optional. In Read or Update mode, index_namespace is required and must point to a pre-existing index and namespace; the other Create-mode arguments are inapplicable.",
+    "source_evidence": [
+      {
+        "file": "ragspecs.rst",
+        "lines": [
+          71,
+          88
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 22,
+    "question": "What keys should be provided in vector_store_cfg for PGVector, and what caution applies to pre_delete_collection?",
+    "reference_answer": "For Postgres PGVector, the connection key is required in all modes. collection_name is required for Read and Update mode and inapplicable to Create mode, where an SHA-based random name is generated. You can provide embedding_cfg as with Pinecone. pre_delete_collection is optional, defaults to False, applies only to Update mode, and should be used cautiously because it deletes the collection if it already exists before writing.",
+    "source_evidence": [
+      {
+        "file": "ragspecs.rst",
+        "lines": [
+          90,
+          97
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 23,
+    "question": "How does document_template work in RFLangChainRagSpec?",
+    "reference_answer": "document_template is an optional function that formats each retrieved chunk for injection into prompts. It accepts a LangChain Document and returns a string. Serialized documents are separated by double newlines. If no template is provided, RapidFire AI joins all metadata key-value pairs with semicolons, then adds a newline and the document's page_content. Custom templates can include chosen metadata fields such as source or title.",
+    "source_evidence": [
+      {
+        "file": "ragspecs.rst",
+        "lines": [
+          124,
+          148
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 24,
+    "question": "What does reranker_cfg require, and how does top_n interact with search k?",
+    "reference_answer": "reranker_cfg is a dictionary containing a reranker class under the 'class' key, not an instance, plus kwargs needed to initialize it. Options include CrossEncoderReranker, which requires fields such as model_name, model_kwargs, and top_n. When constructing a config group, if search_cfg k is less than reranker top_n, that combination is meaningless and is automatically omitted; all other combinations become valid runs.",
+    "source_evidence": [
+      {
+        "file": "ragspecs.rst",
+        "lines": [
+          118,
+          119
+        ]
+      },
+      {
+        "file": "ragspecs.rst",
+        "lines": [
+          381,
+          382
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 25,
+    "question": "What does get_context() do, and what options does it expose?",
+    "reference_answer": "get_context() retrieves relevant context document chunks for a batch of query strings and can optionally serialize them. It takes batch_queries, use_reranker, and serialize. If a reranker is provided, use_reranker defaults to True and applies it. If serialize is True, it returns a list of formatted context strings; if False, it returns raw Document lists. It raises a ValueError if the retriever is not configured.",
+    "source_evidence": [
+      {
+        "file": "ragspecs.rst",
+        "lines": [
+          161,
+          178
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 26,
+    "question": "How does RFPromptManager choose few-shot examples for each input query?",
+    "reference_answer": "RFPromptManager wraps LangChain APIs to manage dynamic few-shot example selection. It uses semantic similarity between examples and each input query, based on an embedding_cfg whose class is provided as a class object rather than an instance. The selection strategy is controlled by example_selector_cls, which can be SemanticSimilarityExampleSelector or MaxMarginalRelevanceExampleSelector for diversity. The k parameter controls how many examples are retrieved per query, defaulting to 3.",
+    "source_evidence": [
+      {
+        "file": "promptothers.rst",
+        "lines": [
+          4,
+          37
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 27,
+    "question": "What eval config knobs can be included apart from the generator?",
+    "reference_answer": "Apart from the Generator, the eval config dictionary can include batch_size, preprocess_fn, postprocess_fn, compute_metrics_fn, accumulate_metrics_fn, and online_strategy_kwargs. These knobs can themselves use List() or Range() where appropriate. online_strategy_kwargs must include strategy_name with 'normal', 'wilson', or 'hoeffding', and may include confidence_level and use_fpc.",
+    "source_evidence": [
+      {
+        "file": "promptothers.rst",
+        "lines": [
+          69,
+          100
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 28,
+    "question": "What does preprocess_fn receive, and what must it return?",
+    "reference_answer": "preprocess_fn is a mandatory user-provided function invoked for each batch before generation. RapidFire AI injects batch data, the RAG spec, and the prompt manager for the leaf config. It must return a dictionary containing the reserved key 'prompts' with the fully formatted prompts for the generator; it can also copy over other original batch fields.",
+    "source_evidence": [
+      {
+        "file": "evalsfunctions.rst",
+        "lines": [
+          8,
+          31
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 29,
+    "question": "When should postprocess_fn be used, and what example does the documentation give?",
+    "reference_answer": "postprocess_fn is optional and is invoked after generation and before metric computation. It is useful for extracting structured information from generations, adding ground truth data, or applying transformations needed before metrics. In the SciFact example, it extracts SUPPORT, CONTRADICT, or NOINFO labels from generated text with a regex and stores the extracted label in batch['answer'].",
+    "source_evidence": [
+      {
+        "file": "evalsfunctions.rst",
+        "lines": [
+          161,
+          213
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 30,
+    "question": "What is the required return format of compute_metrics_fn in run_evals?",
+    "reference_answer": "compute_metrics_fn is mandatory and computes eval metrics over a batch after generation and optional postprocessing. It returns a dictionary where each metric name maps to another dictionary containing at least the reserved key 'value' for that metric's value over the batch.",
+    "source_evidence": [
+      {
+        "file": "evalsfunctions.rst",
+        "lines": [
+          217,
+          234
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 31,
+    "question": "When is accumulate_metrics_fn needed, and what optional metadata can it return?",
+    "reference_answer": "accumulate_metrics_fn is optional and is used to aggregate algebraic metrics across all batches after evaluation completes. If it is not provided, metrics returned by compute_metrics_fn are assumed to be distributive and summed across batches. It returns dictionaries with a required 'value' key and optional 'is_algebraic', 'is_distributive', and 'value_range' keys for online aggregation support.",
+    "source_evidence": [
+      {
+        "file": "evalsfunctions.rst",
+        "lines": [
+          295,
+          319
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 32,
+    "question": "What two generator config classes does RapidFire AI provide for hosted and self-hosted generation?",
+    "reference_answer": "RapidFire AI supports RFvLLMModelConfig for self-hosted open LLMs and RFOpenAIAPIModelConfig for closed model APIs. RFvLLMModelConfig wraps vLLM config and SamplingParams classes. RFOpenAIAPIModelConfig wraps OpenAI's API client config and chat completion parameters. In both cases, individual arguments can be List- or Range-valued for multi-config specification.",
+    "source_evidence": [
+      {
+        "file": "generators.rst",
+        "lines": [
+          4,
+          19
+        ]
+      },
+      {
+        "file": "generators.rst",
+        "lines": [
+          80,
+          89
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 33,
+    "question": "What parameters does RFOpenAIAPIModelConfig expose for retries, reasoning, and rate limits?",
+    "reference_answer": "RFOpenAIAPIModelConfig has a client_config with parameters such as api_key, max_retries, and timeout. Its model_config can include the model name, temperature, max_completion_tokens, reasoning_effort, and top_p. It also exposes rpm_limit for requests per minute and tpm_limit for tokens per minute, which are used for throttling to avoid exceeding API quotas.",
+    "source_evidence": [
+      {
+        "file": "generators.rst",
+        "lines": [
+          91,
+          115
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 34,
+    "question": "What must create_model_fn return, and when is it invoked?",
+    "reference_answer": "create_model_fn is a mandatory user-provided function that creates Hugging Face model and tokenizer objects based on the RFModelConfig and multi-config specification. RapidFire AI invokes it when a trainer object is created for each run. The function receives the leaf model_config dictionary and must return a tuple containing the initialized Hugging Face model and tokenizer.",
+    "source_evidence": [
+      {
+        "file": "fitfunctions.rst",
+        "lines": [
+          8,
+          27
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 35,
+    "question": "What does the formatting function do in run_fit workflows?",
+    "reference_answer": "The formatting function is optional and formats each dataset example into the prompt and completion expected by the model, including roles and system prompt. It is passed as formatting_func to RFModelConfig and can be varied with List() for multi-config experiments. The underlying HF trainer invokes it on training examples and, if provided, evaluation examples on the fly.",
+    "source_evidence": [
+      {
+        "file": "fitfunctions.rst",
+        "lines": [
+          110,
+          133
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 36,
+    "question": "What arguments can reward functions receive in GRPO, and what must they return?",
+    "reference_answer": "Reward functions are user-provided functions for GRPO and are invoked on generated outputs during training. TRL injects prompts, completions, completion IDs, trainer_state, and additional dataset columns as keyword arguments. Depending on dataset format, prompts and completions can be plain strings or message dictionaries. A reward function must return a list of floats, one per completion, or None when the reward is not applicable.",
+    "source_evidence": [
+      {
+        "file": "fitfunctions.rst",
+        "lines": [
+          157,
+          189
+        ]
+      },
+      {
+        "file": "fitfunctions.rst",
+        "lines": [
+          218,
+          234
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 37,
+    "question": "What RFLoraConfig knobs are usually worth experimenting with, and what starting values are suggested?",
+    "reference_answer": "The main LoRA knobs are rank r, lora_alpha, target_modules, lora_dropout, and sometimes init_lora_weights. Rank is the most critical and is typically a power of 2 between 8 and 128. lora_alpha often uses values such as 16, 32, and 64 and is usually set to 2x rank. Common target modules include query/value only, query/key/value, or all linear layers. lora_dropout usually ranges from 0.0 to 0.05. A common starting point is rank 16 and 32 with alpha 32 and 64, targeting only query/value projection modules.",
+    "source_evidence": [
+      {
+        "file": "models.rst",
+        "lines": [
+          49,
+          67
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 38,
+    "question": "What does RFModelConfig unify, and what limitation does one RFModelConfig object have?",
+    "reference_answer": "RFModelConfig unifies model loading, training configurations, and LoRA settings into a single class. It supports variations in LoRA adapter structures, training arguments for SFT, DPO, and GRPO, formatting and metric functions, and generation settings. One RFModelConfig object can have only one base model configuration and one training control-flow arguments dictionary, but it can include Lists of PEFT configs, formatting functions, eval metrics functions, and reward function lists as part of a multi-config specification.",
+    "source_evidence": [
+      {
+        "file": "models.rst",
+        "lines": [
+          71,
+          83
+        ]
+      },
+      {
+        "file": "models.rst",
+        "lines": [
+          171,
+          174
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 39,
+    "question": "How does RFSFTConfig relate to Hugging Face TRL, and how can it support cross-GPU partitioning?",
+    "reference_answer": "RFSFTConfig is a wrapper around Hugging Face TRL's SFTConfig. It preserves the SFT trainer semantics, but individual arguments can be List- or Range-valued for RapidFire AI multi-config specification. For larger LLMs that do not fit on a single GPU, you can specify FSDP settings using fsdp and fsdp_config so the model can be partitioned across GPUs within a machine.",
+    "source_evidence": [
+      {
+        "file": "trainers.rst",
+        "lines": [
+          8,
+          20
+        ]
+      },
+      {
+        "file": "trainers.rst",
+        "lines": [
+          58,
+          80
+        ]
+      }
+    ]
+  },
+  {
+    "question_id": 40,
+    "question": "How do RFDPOConfig and RFGRPOConfig differ in the trainer examples and FSDP support?",
+    "reference_answer": "RFDPOConfig wraps Hugging Face TRL's DPOConfig and can vary arguments such as loss_type, beta, prompt and completion lengths, optimizer, and batch settings; the example also shows List-valued beta. Like SFT, DPO can use FSDP for large models needing cross-GPU partitioning. RFGRPOConfig wraps TRL's GRPOConfig and includes GRPO-specific settings such as num_generations along with training parameters like learning rate, batch size, and max prompt/completion length. Out-of-the-box FSDP support for GRPO is still in progress.",
+    "source_evidence": [
+      {
+        "file": "trainers.rst",
+        "lines": [
+          102,
+          146
+        ]
+      },
+      {
+        "file": "trainers.rst",
+        "lines": [
+          172,
+          211
+        ]
+      }
+    ]
+  }
+]
