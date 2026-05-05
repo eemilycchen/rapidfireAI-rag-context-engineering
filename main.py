@@ -12,13 +12,12 @@ from modules import TextLoaderWithMetadata, TextSplitterWithLineNum
 
 # document loaders
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
-from langchain_core.documents import Document
 
 # text splitter
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 # embeddings
-from langchain_huggingface import HuggingFaceEmbeddings
+# from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_openai import OpenAIEmbeddings
 
 # cross encoder for reranking
@@ -34,7 +33,7 @@ from rapidfireai.automl import (
 )
 from rapidfireai import Experiment
 
-TRITON_API_KEY = Path('~/api-key.txt').expanduser().read_text(encoding='utf-8').splitlines()[0].strip()
+TRITON_API_KEY = Path('./api-key.txt').expanduser().read_text(encoding='utf-8').splitlines()[0].strip()
 BASE_URL = 'https://tritonai-api.ucsd.edu'
 DATA_DIR = './data/sourcedocs/'
 
@@ -50,11 +49,14 @@ Your job:
 
 Rules:
 1. Use only the retrieved document context.
-2. Keep the answer concise but complete.
+2. Do not infer, generalize, or add plausible details that are not explicitly present.
 3. The answer should be in plain text and do not use any markdown syntax including list.
 4. Mention relevant file names and the corresponding start and end line number when they are clearly useful.
 5. There can be multiple sources but only keep the ones that are really relevant.
 6. The sources must be in valid JSON format.
+7. Do not add background knowledge or plausible details that are not in the context.
+8. Answer all parts of the question, including parameters, defaults, constraints, counts, examples, and workflow steps when they appear in the context.
+9. Every factual claim must be directly supported by the retrieved context.
 
 Output format:
 #### ANSWER: <final answer>
@@ -88,7 +90,10 @@ def main():
         'model': 'api-tgpt-embeddings',
         'api_key': TRITON_API_KEY,
         'base_url': BASE_URL,
-        'check_embedding_ctx_length': False
+        'check_embedding_ctx_length': False,
+        'retry_min_seconds': 5,
+        'retry_max_seconds': 60,
+        'timeout': 120
     }
 
     # define vector storage configurations
@@ -204,30 +209,30 @@ def write_answer(path, results):
     # retrieved context
     retrieved_documents = results[1][0]['retrieved_documents']
     retrieved_contexts = results[1][0]['retrieved_contexts']
+
     output_answers = []
+
     # for each question
     for i in range(len(question_id)):
         # extract the answers including id, answer, source, and retrieved context
         answer = {}
         answer['question_id'] = question_id[i]
-        answer['answer'] = answers[i]
+        answer['answer'] = answers[i].strip()
         if sources[i] is None:
-            answer['sources'] = retrieved_documents[i]
+            answer['sources'] = retrieved_documents[i][:3]
         else:
             try:
-                answer['sources'] = json.loads(sources[i])
-            except json.JSONDecodeError:
-                print(f'{sources[i]} can not find the source')
+                model_source = json.loads(sources[i])
                 answer['sources'] = []
-        context = []
-        for s in answer['sources']:
-            if s in retrieved_documents[i]:
-                idx = retrieved_documents[i].index(s)
-                context.append(retrieved_contexts[i][idx])
-            else:
-                print(s)
-                print('could not find the retrieved document')
-        answer['retrieved_context'] = ' '.join(context)
+                if retrieved_documents[i][0] not in answer['sources']:
+                    answer['sources'].append(retrieved_documents[i][0])
+                for s in model_source:
+                    if s in retrieved_documents[i]:
+                        answer['sources'].append(s)
+            except json.JSONDecodeError:
+                print(f'{sources[i]} can not decode the model generated source')
+                answer['sources'] = retrieved_documents[i][:3]
+        answer['retrieved_context'] = '\n\n'.join(retrieved_contexts[i][:5])
         # add to the final answer list
         output_answers.append(answer)
     # write the answers to the output file
