@@ -649,5 +649,66 @@
         ]
       }
     ]
+  },
+  {
+    "question_id": 41,
+    "question": "How do the three training approaches supported by RapidFire AI — SFT, DPO, and GRPO — differ in their training objectives, dataset requirements, and the number of configurations explored in their tutorial notebooks?",
+    "reference_answer": "RapidFire AI supports three distinct training approaches, each with its own trainer config wrapper around Hugging Face TRL. SFT (Supervised Fine-Tuning) is used for creating task-specific models such as a customer support Q&A chatbot. It uses the Bitext customer support dataset with 5,000 training examples and 200 evaluation examples. The tutorial compares 2 base model architectures (Llama-3.1-8B-Instruct and Mistral-7B-Instruct-v0.3) with 2 different LoRA adapter configurations (low-capacity rank 16 targeting 2 modules and high-capacity rank 128 targeting 4 modules), resulting in 4 total combinations launched via grid search. The trainer config is RFSFTConfig, a wrapper around SFTConfig in HF TRL. DPO (Direct Preference Optimization) is used for aligning LLMs with human preferences. It is a simpler alternative to PPO that directly optimizes the policy model using preference data without requiring a separate reward model. It uses the ultrafeedback binarized dataset with 500 training examples containing paired preference data with chosen and rejected responses. Training starts from a pre-trained SFT model. The tutorial explores 4 different DPO configurations: Basic Bradley-Terry, High divergence, Robust loss, and Combined loss. The trainer config is RFDPOConfig, a wrapper around DPOConfig in HF TRL. GRPO (Group Relative Policy Optimization) is used to improve mathematical reasoning capabilities. It is an RL approach that uses multiple reward functions to provide richer training signals. It uses the GSM8K dataset with 500 training examples and 100 evaluation examples. The tutorial compares 3 different base model architectures, all using 4-bit quantization with the same medium-capacity LoRA targeting 2 modules, resulting in 4 total combinations. GRPO uses 5 custom reward functions: correctness reward, integer reward, strict format reward, soft format reward, and XML count reward. The trainer config is RFGRPOConfig, a wrapper around GRPOConfig in HF TRL, and out-of-the-box FSDP support for GRPO is still in the works.",
+    "source_evidence": [
+      {"file": "sft.rst", "lines": [17, 39]},
+      {"file": "dpo.rst", "lines": [14, 47]},
+      {"file": "grpo.rst", "lines": [14, 48]},
+      {"file": "trainers.rst", "lines": [4, 20]},
+      {"file": "trainers.rst", "lines": [102, 114]},
+      {"file": "trainers.rst", "lines": [172, 211]}
+    ]
+  },
+  {
+    "question_id": 42,
+    "question": "What are the GPU requirements for running RapidFire AI across its different workflows (RAG/context engineering vs. SFT with FSDP), and how can users select specific GPUs or troubleshoot GPU-related issues?",
+    "reference_answer": "RapidFire AI works on a CPU-only machine, a single-GPU machine, or a multi-GPU machine. For RAG/context engineering with only closed model APIs, GPUs are not needed. For SFT with FSDP (multi-GPU model partitioning), the GPU requirements scale with model size: FSDP Lite with TinyLlama needs at least 2x A10 GPUs or equivalent (48 GB total HBM), FSDP Regular with Qwen3-32B needs at least 4x A10 GPUs or equivalent (96 GB total HBM), and FSDP Large with Llama-3-70B-Instruct needs at least 8x A10 GPUs or equivalent (192 GB total HBM). Although these tutorials can work on A10 GPUs, it is highly recommended to use at least A100s or later GPUs with NVLink support for reasonable runtimes. For non-FSDP SFT, the full version requires a GPU with >= 80 GB HBM while the lite version works with < 80 GB HBM. Users can set the CUDA_VISIBLE_DEVICES environment variable BEFORE running rapidfireai start to control which GPUs RapidFire can see and use, for example export CUDA_VISIBLE_DEVICES=2 for a single GPU or CUDA_VISIBLE_DEVICES=0,2 for multiple GPUs. This can also be set from a Python script. If any error is encountered, running rapidfireai doctor provides a complete diagnostic report covering the Python environment, relevant packages, GPU/CUDA, and key environment variables.",
+    "source_evidence": [
+      {"file": "overview.rst", "lines": [19, 20]},
+      {"file": "sft.rst", "lines": [7, 10]},
+      {"file": "sft.rst", "lines": [42, 57]},
+      {"file": "troubleshooting.rst", "lines": [10, 17]},
+      {"file": "troubleshooting.rst", "lines": [52, 76]}
+    ]
+  },
+  {
+    "question_id": 43,
+    "question": "How does the RapidFire AI Experiment class differ in fit mode versus eval mode in terms of its API functions, return values, and the workflow steps for launching evaluations?",
+    "reference_answer": "The Experiment class is a core concept in RapidFire AI that defines a collection of training and evaluation operations. Each experiment is assigned a unique name used for display of plots on the ML metrics dashboard and for artifact tracking. Only one experiment can be alive at any point in time. The mode is set via the mode parameter in the constructor: Experiment(experiment_name, mode=\"fit\") for SFT or Experiment(experiment_name, mode=\"eval\") for RAG evaluations. As of this writing, an experiment can operate in either fit mode or eval mode but not both. In fit mode, run_fit() launches training and evaluation for a given config group, requiring create_model_fn, train_dataset, eval_dataset, and num_chunks among other parameters. It does not have a return value. It auto-generates ML metrics files and auto-plots them on the dashboard. In eval mode, run_evals() launches LLM evaluation with optional RAG for a given config group, requiring config_group, dataset, and num_shards. Unlike run_fit(), it returns a dictionary with the run/config ID as key and a 2-tuple of aggregated metrics and cumulative metrics as value. The experiment operations associated with the Experiment class include run_fit(), end(), the constructor, and two informational methods: get_runs_info() and get_results(). For RAG evaluations, the notebook workflow proceeds through: imports, load datasets, create named experiment, define RAG spec wrapping LangChain classes, define preprocessing and postprocessing functions, define eval metrics functions, define generator spec, configure the multi-config knob dictionary and generate config group, then launch multi-config evals with run_evals().",
+    "source_evidence": [
+      {"file": "experiment.rst", "lines": [7, 52]},
+      {"file": "experiment.rst", "lines": [68, 131]},
+      {"file": "experiment.rst", "lines": [133, 194]},
+      {"file": "glossary.rst", "lines": [50, 70]},
+      {"file": "walkthroughrag.rst", "lines": [200, 222]}
+    ]
+  },
+  {
+    "question_id": 44,
+    "question": "How do DPO and GRPO differ in their use of reference models and reward signals, and how are these configured in the RapidFire AI API through RFModelConfig and their respective trainer configs?",
+    "reference_answer": "DPO directly optimizes the policy model using preference data without requiring a separate reward model. It uses paired preference data with chosen and rejected responses. Training starts from a pre-trained SFT model to ensure the model distribution is suitable for DPO alignment training. The beta parameter controls divergence from the reference model. DPO supports multiple loss function types including sigmoid loss, robust loss with label smoothing, and combined loss. In RFDPOConfig, loss_type and beta are key knobs. GRPO is an RL approach that uses multiple reward functions to provide richer training signals. Instead of human preference pairs, it uses 5 custom reward functions: correctness reward (2.0 points), integer reward (0.5 points), strict format reward (0.5 points), soft format reward (0.5 points), and XML count reward (up to 0.5 points). The RFGRPOConfig example shows key parameters including num_generations, learning_rate, and max_completion_length. In RFModelConfig, the ref_model_name, ref_model_type, and ref_model_kwargs parameters are for DPO and GRPO only and specify the frozen reference model. The reward_funcs parameter specifies reward functions for evaluating generated outputs during training and is mainly for GRPO but can be used for DPO too. The training_args parameter accepts RFSFTConfig, RFDPOConfig, or RFGRPOConfig to select the training control flow. Both RFDPOConfig and RFGRPOConfig are thin wrappers around their respective HF TRL counterparts.",
+    "source_evidence": [
+      {"file": "dpo.rst", "lines": [14, 47]},
+      {"file": "grpo.rst", "lines": [14, 48]},
+      {"file": "models.rst", "lines": [106, 132]},
+      {"file": "trainers.rst", "lines": [102, 146]},
+      {"file": "trainers.rst", "lines": [172, 211]}
+    ]
+  },
+  {
+    "question_id": 45,
+    "question": "What are the complete installation and server startup steps for running RapidFire AI RAG evaluations, and what diagnostic commands and fixes are available if the setup encounters errors?",
+    "reference_answer": "The installation requires Python 3.12+. Create a virtual environment and install: python3 -m venv .venv, source .venv/bin/activate, pip install rapidfireai, then verify with rapidfireai --version and run pip uninstall -y hf-xet due to a current issue. If you plan to use only OpenAI APIs and not self-hosted models, you do NOT need GPUs but must provide a valid OpenAI API key. Next, run rapidfireai init --evals to install specific dependencies and initialize for RAG evals — this only needs to be run once for a new venv. Then run rapidfireai start to start the frontend dashboard and API server. Do NOT proceed until the start is successful with Available endpoints printed. Starting the server is optional for RAG evaluations with run_evals() — it is only needed if you want to see results on the ML metrics dashboard. If the start command fails, wait for half a minute and rerun it. For diagnostics, run rapidfireai doctor to get a complete diagnostic report covering the Python environment, relevant packages, GPU/CUDA, and key environment variables. For port conflicts, kill existing processes on the specific ports: lsof -t -i:8852 for mlflow, lsof -t -i:8851 for dispatcher, and lsof -t -i:8853 for frontend server. For GPU selection, set CUDA_VISIBLE_DEVICES BEFORE running rapidfireai start.",
+    "source_evidence": [
+      {"file": "walkthroughrag.rst", "lines": [28, 55]},
+      {"file": "walkthroughrag.rst", "lines": [62, 103]},
+      {"file": "overview.rst", "lines": [19, 20]},
+      {"file": "troubleshooting.rst", "lines": [6, 17]},
+      {"file": "troubleshooting.rst", "lines": [41, 76]}
+    ]
   }
 ]
