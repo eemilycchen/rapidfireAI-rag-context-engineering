@@ -1,12 +1,11 @@
 import argparse
-import json
-import re
-import sys
 from pathlib import Path
+import json
+from datasets import Dataset
+
 from typing import Dict
 from typing import List as listtype
-
-from datasets import Dataset
+import re
 
 # import custom modules
 from modules import TextLoaderWithMetadata, TextSplitterWithLineNum
@@ -34,7 +33,12 @@ from rapidfireai.automl import (
 )
 from rapidfireai import Experiment
 
-DEFAULT_BASE_URL = 'https://tritonai-api.ucsd.edu'
+TRITON_API_KEY = Path('./api-key.txt').expanduser().read_text(encoding='utf-8').splitlines()[0].strip()
+BASE_URL = 'https://tritonai-api.ucsd.edu'
+DATA_DIR = './data/sourcedocs/'
+GENERATION_MODEL = 'api-gpt-oss-120b'
+
+
 batch_size = 32
 
 INSTRUCTIONS = """
@@ -61,168 +65,116 @@ Output format:
 #### SOURCE: [{"file": <source file>, "lines": [<start line>, <end line>]}]
 """
 
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--input', required=True, help='Path to input JSON')
+    parser.add_argument('--output', required=True, help='Path to output JSON')
+    parser.add_argument('--corpus-dir', required=False, help='Path to the directiory containing the corpus', default=DATA_DIR)
+    parser.add_argument('--apikey-txt', required=False, help='API key for the LLM', default='~/api-key.txt')
+    parser.add_argument('--generation-model', required=False, help='LLM model used for RAG', default=GENERATION_MODEL)
+    
+    args = parser.parse_args()
 
-def _read_api_key(path: Path) -> str:
-    text = path.expanduser().read_text(encoding='utf-8')
-    line = text.splitlines()[0].strip() if text.strip() else ''
-    if not line:
-        raise ValueError(f'API key file is empty: {path}')
-    return line
+    TRITON_API_KEY = Path(args.apikey_txt).expanduser().read_text(encoding='utf-8').splitlines()[0].strip()
 
-
-def _is_rate_limit_error(err: BaseException) -> bool:
-    """Best-effort detection of HTTP 429 / rate limiting for fallback generation."""
-    if err is None:
-        return False
-    cur: BaseException | None = err
-    seen: set[int] = set()
-    while cur is not None and id(cur) not in seen:
-        seen.add(id(cur))
-        msg = f'{type(cur).__name__} {cur}'.lower()
-        if '429' in msg or 'rate limit' in msg or 'too many requests' in msg:
-            return True
-        cur = getattr(cur, '__cause__', None) or getattr(cur, '__context__', None)
-    return False
-
-
-def _model_config_for_gateway(model_name: str) -> dict:
-    cfg: dict = {'model': model_name, 'max_completion_tokens': 2048}
-    lower = model_name.lower()
-    if 'gpt-oss' in lower or 'oss-120' in lower:
-        cfg['reasoning_effort'] = 'high'
-    return cfg
-
-
-def _build_config_group(*, corpus_dir: Path, api_key: str, base_url: str, generation_model: str):
+    # define document loader
     loader = DirectoryLoader(
-        path=str(corpus_dir),
-        glob='**/*.rst',
-        loader_cls=TextLoaderWithMetadata,
-        loader_kwargs={'metadata_func': metadata_func},
-        show_progress=True,
-        use_multithreading=True,
+        path=args.corpus_dir, glob='**/*.rst', loader_cls=TextLoaderWithMetadata,
+        loader_kwargs={
+            'metadata_func': metadata_func,
+        },
+        show_progress=True, use_multithreading=True
     )
+
+    # define text splitter
     text_splitter = TextSplitterWithLineNum().from_tiktoken_encoder(
         encoding_name='o200k_base', chunk_size=384, chunk_overlap=64, separators=['\n', '\n\n']
     )
+
+    # define embedding configurations
     embedding_cfg = {
         'class': OpenAIEmbeddings,
         'model': 'api-tgpt-embeddings',
-        'api_key': api_key,
-        'base_url': base_url,
-        'check_embedding_ctx_length': False,
+        'api_key': TRITON_API_KEY,
+        'base_url': BASE_URL,
+        'check_embedding_ctx_length': False
     }
-    vector_store_cfg = {'type': 'faiss', 'batch_size': batch_size}
-    search_cfg = List([{'type': 'mmr', 'k': 15}])
-    reranker_cfg = {
-        'class': CrossEncoderReranker,
-        'model_name': 'BAAI/bge-reranker-v2-m3',
-        'model_kwargs': {'device': 'cpu'},
-        'top_n': 8,
+
+    # define vector storage configurations
+    vector_store_cfg={'type': 'faiss', 'batch_size': batch_size}
+
+    # define searching algorithm configurations
+    search_cfg=List([{'type': 'mmr', 'k': 15}])
+
+    # define reranker configurations
+    reranker_cfg={
+        'class': CrossEncoderReranker, 'model_name': 'BAAI/bge-reranker-v2-m3',
+        'model_kwargs': {'device': 'cpu'}, 'top_n': 8,
     }
+
+    # define rag module
     rag = RFLangChainRagSpec(
+        # to load the corpus
         document_loader=loader,
+        # to split documents into chunks
         text_splitter=text_splitter,
+        # to embed the chunks
         embedding_cfg=embedding_cfg,
+        # vectore storage
         vector_store_cfg=vector_store_cfg,
+        # search algorithm
         search_cfg=search_cfg,
+        # rerank top results with a cross encoder
         reranker_cfg=reranker_cfg,
+        # whether to use gpu-accelerated faiss
         enable_gpu_search=False,
+        # to format each retrieved chunk for context injection into prompts
         document_template=custom_template,
     )
+
+    # open ai model configurations
     openai_config = RFOpenAIAPIModelConfig(
-        client_config={'api_key': api_key, 'base_url': base_url, 'max_retries': 2},
-        model_config=_model_config_for_gateway(generation_model),
+        client_config={'api_key': TRITON_API_KEY, 'base_url': BASE_URL, 'max_retries': 2},
+        model_config={
+            'model': args.generation_model,
+            'max_completion_tokens': 2048,
+            # # two different reasoning levels
+            'reasoning_effort': 'high'
+        },
+        # request per minute needs to be set based on your account tier and the specific model used
         rpm_limit=120,
+        # token per minute needs to be set based on your account tier and the specific model used
         tpm_limit=1_000_000,
+        # rag model
         rag=rag,
-        prompt_manager=None,
+        prompt_manager=None
     )
+
+    # set up a grid search for all the configurations
     config_set = List([{
-        'openai_config': List([openai_config]),
+        'openai_config': List([
+            openai_config
+        ]),
         'batch_size': batch_size,
-        'preprocess_fn': sample_preprocess_fn,
-        'postprocess_fn': sample_postprocess_fn,
-        'compute_metrics_fn': {},
-        'accumulate_metrics_fn': {},
+        'preprocess_fn': sample_preprocess_fn, 'postprocess_fn': sample_postprocess_fn,
+        'compute_metrics_fn': {}, 'accumulate_metrics_fn': {},
     }])
-    return RFGridSearch(config_set)
+    config_group = RFGridSearch(config_set)
 
+    # create experiments
+    experiment = Experiment(experiment_name='rag-generation-only', mode='evals')
 
-def main():
-    parser = argparse.ArgumentParser(description='RAG eval generation via RapidFire AI.')
-    parser.add_argument('--input', required=True, help='JSON file of [{question_id, question}, ...]')
-    parser.add_argument('--output', required=True, help='Where to write predictions JSON')
-    parser.add_argument(
-        '--corpus-dir',
-        required=True,
-        help='Root of the .rst corpus (released sourcedocs/ layout)',
-    )
-    parser.add_argument(
-        '--apikey-txt',
-        required=True,
-        help='Path to text file containing the TritonAI gateway API key (first line)',
-    )
-    parser.add_argument(
-        '--generation-model',
-        required=True,
-        help='Gateway model id for answer generation (e.g. api-gpt-oss-120b, claude-sonnet-4-6)',
-    )
-    parser.add_argument(
-        '--fallback-generation-model',
-        default='api-mistral-small-3.2-2506',
-        help='If the primary model hits rate limits (429), retry the run with this model.',
-    )
-    parser.add_argument(
-        '--base-url',
-        default=DEFAULT_BASE_URL,
-        help=f'OpenAI-compatible gateway base URL (default: {DEFAULT_BASE_URL})',
-    )
-    args = parser.parse_args()
-
-    api_key = _read_api_key(Path(args.apikey_txt))
-    corpus_dir = Path(args.corpus_dir).expanduser().resolve()
-    base_url = str(args.base_url).rstrip('/')
-    if not corpus_dir.is_dir():
-        raise FileNotFoundError(f'--corpus-dir is not a directory: {corpus_dir}')
-
-    models_to_try = []
-    for m in (args.generation_model, args.fallback_generation_model):
-        if m and m not in models_to_try:
-            models_to_try.append(m)
-
+    # load the questions
     questions = load_question_set(args.input)
 
-    for i, model_name in enumerate(models_to_try):
-        experiment = None
-        try:
-            config_group = _build_config_group(
-                corpus_dir=corpus_dir,
-                api_key=api_key,
-                base_url=base_url,
-                generation_model=model_name,
-            )
-            experiment = Experiment(experiment_name='rag-generation-only', mode='evals')
-            results = experiment.run_evals(
-                config_group=config_group, dataset=questions, num_shards=4, seed=42
-            )
-            print('experiments finished')
-            write_answer(args.output, results)
-            break
-        except Exception as e:
-            if i < len(models_to_try) - 1 and _is_rate_limit_error(e):
-                print(
-                    f'Rate limit error for {model_name}; retrying with {models_to_try[i + 1]} …',
-                    file=sys.stderr,
-                )
-                continue
-            raise
-        finally:
-            if experiment is not None:
-                try:
-                    experiment.end()
-                except Exception:
-                    pass
+    # run the experiments
+    results = experiment.run_evals(config_group=config_group, dataset=questions, num_shards=4, seed=42)
+    experiment.end()
+
+    print('experiments finished')
+
+    # write the results to the output json file
+    write_answer(args.output, results)
 
 
 def metadata_func(document, metadata):
