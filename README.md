@@ -79,6 +79,7 @@
   - **AI Tools Statement**
 
 ## To Run the Code
+Start the RapidFire AI with `rapidfireai start`
 - RAG:
   ```
   python3 main.py --input ./data/validation-set/validation-set-golden-qa-pairs.json --output ./output.json 
