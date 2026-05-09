@@ -23,7 +23,7 @@
   {
     "question_id": 2,
     "question": "What kinds of knobs can RapidFire AI vary beyond ordinary hyperparameters?",
-    "reference_answer": "RapidFire AI generalizes multi-config experimentation beyond ordinary hyperparameters. It can vary base model architectures, prompt schemes, LoRA adapters, optimizers for training, and RAG/context-engineering knobs such as data chunking, embedding, retrieval, reranking, generation, and prompt schemes, as well as other user-defined knobs.",
+    "reference_answer": "RapidFire AI generalizes multi-config experimentation beyond ordinary hyperparameters. It can vary base model architectures, prompt schemes, LoRA adapters, optimizers for training, and RAG knobs such as data chunking, embedding, retrieval, reranking, generation, and prompt schemes, as well as other user-defined knobs.",
     "source_evidence": [
       {
         "file": "configs.rst",
@@ -100,7 +100,7 @@
   {
     "question_id": 7,
     "question": "What confidence interval strategies does RapidFire AI support, and when is each appropriate?",
-    "reference_answer": "RapidFire AI supports Normal Approximation, Wilson Score, and Hoeffding Bounds. Normal Approximation is the default and is suitable for most cases with non-trivial sample sizes such as n > 30. Wilson Score is better for small samples or metrics near 0/1 boundaries. Hoeffding Bounds are safest because they make no distributional assumptions and provide guaranteed coverage, but their intervals are typically loose.",
+    "reference_answer": "RapidFire AI supports Normal Approximation, Wilson Score, and Hoeffding Bounds. Normal Approximation is the default and is suitable for most cases with non-trivial sample sizes such as n > 30. Wilson Score is better for small samples or metrics near 0/1 boundaries. Hoeffding Bounds are safest because they make no distributional assumptions and provide guaranteed coverage, but their intervals are typically quite loose.",
     "source_evidence": [
       {
         "file": "onlineagg.rst",
@@ -149,13 +149,6 @@
         "lines": [
           123,
           140
-        ]
-      },
-      {
-        "file": "icops.rst",
-        "lines": [
-          154,
-          164
         ]
       }
     ]
@@ -296,7 +289,7 @@
   {
     "question_id": 18,
     "question": "How does RFLangChainRagSpec differ between preprocessing and no-preprocessing workflows?",
-    "reference_answer": "With preprocessing, RFLangChainRagSpec creates both document preprocessing workers and query processing workers; you provide a document_loader, optional text_splitter, embedding_cfg, and optional vector_store_cfg. The documents are loaded, optionally chunked, embedded, and stored in a vector store, defaulting to FAISS if no vector store config is provided. Without preprocessing, it creates only query processing workers over an optional preprocessed vector store; you provide the embedding config needed for queries, optionally a retriever and/or vector_store_cfg, optional search_cfg, and optional reranker_cfg.",
+    "reference_answer": "With preprocessing, RFLangChainRagSpec creates both document preprocessing workers and query processing workers; you provide a document_loader, optional text_splitter, embedding_cfg, and optional vector_store_cfg. The documents are loaded, optionally chunked, embedded, and stored in a vector store, defaulting to FAISS if no vector store config is provided. Without preprocessing, it creates only query processing workers over an optional preprocessed vector store; you provide an optional embedding_cfg for the queries, optionally a retriever and/or vector_store_cfg, optional search_cfg, and optional reranker_cfg.",
     "source_evidence": [
       {
         "file": "ragspecs.rst",
@@ -366,7 +359,7 @@
   {
     "question_id": 23,
     "question": "How does document_template work in RFLangChainRagSpec?",
-    "reference_answer": "document_template is an optional function that formats each retrieved chunk for injection into prompts. It accepts a LangChain Document and returns a string. Serialized documents are separated by double newlines. If no template is provided, RapidFire AI joins all metadata key-value pairs with semicolons, then adds a newline and the document's page_content. Custom templates can include chosen metadata fields such as source or title.",
+    "reference_answer": "document_template is an optional function that formats each retrieved chunk for injection into prompts. It accepts a LangChain Document and returns a string. Serialized documents are separated by double newlines. If no template is provided, RapidFire AI joins all metadata key-value pairs with semicolons, appends a colon and newline, followed by the document's page_content. Custom templates can include chosen metadata fields such as source or title.",
     "source_evidence": [
       {
         "file": "ragspecs.rst",
@@ -429,7 +422,7 @@
   {
     "question_id": 27,
     "question": "What eval config knobs can be included apart from the generator?",
-    "reference_answer": "Apart from the Generator, the eval config dictionary can include batch_size, preprocess_fn, postprocess_fn, compute_metrics_fn, accumulate_metrics_fn, and online_strategy_kwargs. These knobs can themselves use List() or Range() where appropriate. online_strategy_kwargs must include strategy_name with 'normal', 'wilson', or 'hoeffding', and may include confidence_level and use_fpc.",
+    "reference_answer": "Apart from the Generator, the eval config dictionary can include batch_size, preprocess_fn, postprocess_fn, compute_metrics_fn, accumulate_metrics_fn, and online_strategy_kwargs. These knobs can themselves use List() or Range() where appropriate. online_strategy_kwargs must include strategy_name with 'normal', 'wilson', or 'hoeffding', and must also include confidence_level and use_fpc.",
     "source_evidence": [
       {
         "file": "promptothers.rst",
@@ -485,7 +478,7 @@
   {
     "question_id": 31,
     "question": "When is accumulate_metrics_fn needed, and what optional metadata can it return?",
-    "reference_answer": "accumulate_metrics_fn is optional and is used to aggregate algebraic metrics across all batches after evaluation completes. If it is not provided, metrics returned by compute_metrics_fn are assumed to be distributive and summed across batches. It returns dictionaries with a required 'value' key and optional 'is_algebraic', 'is_distributive', and 'value_range' keys for online aggregation support.",
+    "reference_answer": "accumulate_metrics_fn is optional and is used to aggregate algebraic metrics across all batches after evaluation completes. If it is not provided, metrics returned by compute_metrics_fn are assumed to be distributive and summed across batches. It returns dictionaries with a required 'value' key and optional 'is_algebraic', 'is_distributive', and 'value_range' keys as metric metadata.",
     "source_evidence": [
       {
         "file": "evalsfunctions.rst",
@@ -534,7 +527,7 @@
   {
     "question_id": 34,
     "question": "What must create_model_fn return, and when is it invoked?",
-    "reference_answer": "create_model_fn is a mandatory user-provided function that creates Hugging Face model and tokenizer objects based on the RFModelConfig and multi-config specification. RapidFire AI invokes it when a trainer object is created for each run. The function receives the leaf model_config dictionary and must return a tuple containing the initialized Hugging Face model and tokenizer.",
+    "reference_answer": "create_model_fn is a mandatory user-provided function that creates Hugging Face model and tokenizer objects based on the RFModelConfig and multi-config specification. RapidFire AI invokes it when a trainer object is created for each run. The function receives a model_config dictionary representing one config output by the config-group generator and must return a tuple containing the initialized Hugging Face model and tokenizer.",
     "source_evidence": [
       {
         "file": "fitfunctions.rst",
