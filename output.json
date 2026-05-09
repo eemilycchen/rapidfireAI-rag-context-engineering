@@ -2,7 +2,7 @@
     {
         "question_id": 1,
         "answer": "RapidFire AI currently supports two knob set generators for multi\u2011config specifications: List() for a discrete set of values and Range() for sampling from a continuous value interval.",
-        "sources": [
+        "sources": [ 
             {
                 "file": "configs.rst",
                 "lines": [
