@@ -2,9 +2,9 @@
 
 ## Main Components
 (Copied from [Project Statement](project1-statement.pdf))
-- [ ] **Golden Data Creation:** Create at least 20 golden-labeled Q&A pairs over the documentation corpus, with identified source locations
+- [X] **Golden Data Creation:** Create at least 20 golden-labeled Q&A pairs over the documentation corpus, with identified source locations
 - [X] **System Building:** Build a RAG pipeline that, given a user question, retrieves relevant document chunks and generates an answer within the context budget
-- [ ] **Experimentation and Evaluation:** Use RapidFire AI OSS to systematically compare multiple RAG configurations (varying chunking, embedding, retrieval, reranking, and prompting strategies) and analyze results
+- [X] **Experimentation and Evaluation:** Use RapidFire AI OSS to systematically compare multiple RAG configurations (varying chunking, embedding, retrieval, reranking, and prompting strategies) and analyze results
 
 ## Things to Do
 - Golden Q&A Evaluation Data
@@ -108,39 +108,67 @@ Start the RapidFire AI with `rapidfireai start`
 ---
 
 ```bash
-RAPIDFIREAI-RAG-CONTEXT-ENGINEERING
+rapidfireAI-rag-context-engineering-main
+├── .gitignore
+├── CSE_234_Project_1_Report.pdf
 ├── README.md
-├── project1-statement.pdf
-├── golden_qa.json
+├── golden_qa_pairs.json
 ├── main.py
-├── data/
-│   ├── validation-set
-│   │   ├── validation-set-golden-qa-pairs.json
-│   │   └── validation-set-question-type-distribution.json
-│   └── sourcedocs/
-├── metrics/
+├── modules.py
+├── output.json
+├── output_golden_qa.json
+├── project1-statement-updated.pdf
+├── requirements.txt
+├── Metrics/
 │   ├── evaluate_retrieval.py
 │   ├── judge_prompt.txt
 │   ├── project1_eval.py
 │   ├── rapidfire_integration_example.py
 │   └── run_judge.py
-├── misc/
-│   ├── ai_usage.md
-│   └── scratch.ipynb
+├── data/
+│   ├── sourcedocs/
+│   │   ├── _templates/
+│   │   ├── conf.py
+│   │   └── *.rst (documentation corpus)
+│   └── validation-set/
+│       ├── validation-set-golden-qa-pairs.json
+│       └── validation-set-question-type-distribution.json
+├── discussion/
+│   ├── datasets/scifact/
+│   │   ├── corpus.jsonl
+│   │   ├── qrels.tsv
+│   │   ├── queries.jsonl
+│   │   └── test-queries.jsonl
+│   ├── discussion1-rag-scifact.ipynb
+│   └── rapidfireai_datahub_compat.py
 ├── experiments/
 │   ├── experiment.ipynb
+│   ├── experiments_1.csv
+│   ├── experiments_2.csv
+│   ├── experiments_3.csv
+│   ├── experiments_4.csv
+│   ├── experiments_5.csv
+│   ├── experiments_6.csv
 │   ├── judge_prompt.txt
 │   ├── project1_eval.py
 │   ├── rapidfire_integration_example.py
-│   └── results.ipynb
-└── discussion/
-    ├── datasets/scifact/
-    │   ├── corpus.jsonl
-    │   ├── qrels.tsv
-    │   ├── queries.jsonl
-    │   └── test-queries.jsonl
-    ├── discussion1-rag-scifact.ipynb
-    └── rapidfireai_datahub_compat.py
+│   ├── results.ipynb
+│   └── visualization.ipynb
+└── misc/
+    ├── SSH-Setup.md
+    ├── ai_usage.md
+    ├── config-plan.md
+    ├── explaining-scratch.md
+    ├── golden_qa_pairs.json
+    ├── scratch.ipynb
+    ├── experiments/
+    │   ├── grid_search.ipynb
+    │   ├── grid_search_experiment.ipynb
+    │   └── track_results.py
+    └── logs/
+        ├── experiment_results.csv
+        ├── experiment_results.json
+        └── experiments_0.csv
 ```
 
 ---
