@@ -89,13 +89,13 @@ Start the RapidFire AI with `rapidfireai start`
   - Evaluate Retrieval
     
     ```
-    python3 ./metrics/evaluate_retrieval.py --output ./output.json --validation data/validation-set/validation-set-golden-qa-pairs.json
+    python3 ./metric/evaluate_retrieval.py --output ./output.json --validation data/validation-set/validation-set-golden-qa-pairs.json
     ```
 
   - LLM Judge
     
     ```
-    python3 metrics/run_judge.py --output ./output.json --validation ./data/validation-set/validation-set-golden-qa-pairs.json --base-url https://tritonai-api.ucsd.edu/v1 --model api-mistral-small-3.2-2506
+    python3 metric/run_judge.py --output ./output.json --validation ./data/validation-set/validation-set-golden-qa-pairs.json --base-url https://tritonai-api.ucsd.edu/v1 --model api-mistral-small-3.2-2506
     ```
 
 ## Miscellaneous
@@ -119,7 +119,7 @@ rapidfireAI-rag-context-engineering-main
 ├── output_golden_qa.json
 ├── project1-statement-updated.pdf
 ├── requirements.txt
-├── Metrics/
+├── metric/
 │   ├── evaluate_retrieval.py
 │   ├── judge_prompt.txt
 │   ├── project1_eval.py
